@@ -1,10 +1,10 @@
 import express from 'express';
 
 import authRoutes from './Routes/AuthRoute';
-import { createChannel, subscribeMessage, subsMessage } from '../src/utils/index';
+import { createChannel, subsMessage } from '../src/utils/index';
 import AuthController from './Controllers/AuthController';
 
-import {AUTH_BINDING_KEY, AUTH_QUEUE_NAME} from '../src/config/envKeys';
+import { AUTH_QUEUE_NAME } from '../src/config/envKeys';
 
 const app = express();
 

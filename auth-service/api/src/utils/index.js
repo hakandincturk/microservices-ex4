@@ -72,8 +72,6 @@ module.exports.subsMessage = async (controller, QUEUE_NAME) => {
 
 					// eslint-disable-next-line new-cap
 					controller.SubscribeEvents(ch, msg);
-					
-					console.log('subscribe events completed and going acknowlodge message');
 				});
 			});
 		})

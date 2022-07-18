@@ -37,16 +37,13 @@ class AuthController{
 	static async register(req, res){
 		try {
 
-			const validation = await AuthValidation.registerValidation(req.body);
+			const message = req.body;
 
-			if (!validation.type)
-				res.json({type: false, message: validation.message});
-			else {
-				const result = await AuthService.register(req.body);
-
-				if (result.type) res.json({type: true, message: result.message});
-				else res.json({type: false, message: result.message});
-			}
+			const resData = await sendMessageToQueue('REGISTER', message, AUTH_QUEUE_NAME);
+			
+			const data = JSON.parse(resData);
+			if (!data.type) return res.status(403).json(data);
+			else return res.status(200).json(data);
 		}
 		catch (error) {
 			res.json({type: false, message: error.message});
@@ -66,57 +63,14 @@ class AuthController{
 
 			const message = req.body;
 
-			const resData = await sendMessageToQueue(message, AUTH_QUEUE_NAME);
+			const resData = await sendMessageToQueue('LOGIN', message, AUTH_QUEUE_NAME);
 
-			return res.json(JSON.parse(resData));
+			const data = JSON.parse(resData);
 
-			/*
-			 * const channel = req.channel;
-			 * const uuid = uuidv4();
-			 */
-
-			// consola.info('gateway->AuthController.js->uuid, ', uuid);
+			if (!data.type) return res.status(403).json(data);
+			else return res.status(200).json(data);
 			
-			// const data = req.body;
-
-			// publishMessage(channel, AUTH_BINDING_KEY, JSON.stringify({event: 'LOGIN', data, uuid: uuid}));
-
-			/*
-			 * const result = 
-			 * await subscribeReplyMessage(channel, AUTH_BINDING_REPLY_KEY, AUTH_QUEUE_REPLY_NAME, uuid);
-			 * let returnedData;
-			 * const appQueue = await channel.assertQueue(AUTH_QUEUE_REPLY_NAME);
-			 * let isMatch = false, a;
-			 * channel.bindQueue(appQueue.queue, EXCHANGE_NAME, AUTH_BINDING_REPLY_KEY);
-			 *  channel.consume(appQueue.queue, async (consumeData) => {
-			 * 	console.log(`${AUTH_BINDING_REPLY_KEY} recieved data`);
-			 * 	/ console.log(data.content.toString());
-			 * 	if (!isMatch) {
-			 * 		const parsedData = JSON.parse(consumeData.content.toString());
-			 */
-
-			/*
-			 * 		/ eslint-disable-next-line eqeqeq
-			 * 		if (parsedData.uuid == uuid){
-			 * 			isMatch = true;
-			 * 			consola.success(`data match, ${uuid}, `, parsedData);
-			 * 			/ a = await returnResponseTrue(req, res, parsedData.result);
-			 * 			channel.ack(consumeData);
-			 * 			consola.debug('acked msg, ', consumeData.content.toString());
-			 * 			returnedData = parsedData.result; 
-			 * 		}
-			 * 		else {
-			 * 			consola.error(`data doesnt match, ${uuid}, `, parsedData.uuid);
-			 * 		}
-			 * 	}
-			 * 	process.exit();
-			 * });
-			 * consola.info('gateway->authcontroller.js ', uuid, returnedData);
-			 * if (a) return res.json(a);
-			 * if ( isMatch === false ) return res.status(403).json({type: false, message: 'error1'});
-			 */
 		}
-
 		catch (error) {
 			return res.json({type: false, message: 'error0, ' + error.message});
 		}

@@ -9,9 +9,6 @@ import publicRoutes from './Public/index';
 import privateRoutes from './Private/index';
 import { swaggerOptions } from './src/config/swaggerOptions';
 
-import constChannel from './src/middlewares/constChannel';
-import { createClient } from './src/utils/index';
-
 const startServer = async () => {
 	const PORT = process.env.PORT || 5000;
 	const app = express();

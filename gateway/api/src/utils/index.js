@@ -3,8 +3,7 @@ import EventEmitter from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import consola from 'consola';
 
-import { MESSAGE_BROKER_URL, EXCHANGE_NAME, AUTH_QUEUE_NAME } from '../config/envKeys';
-import { setTimeout } from 'timers/promises';
+import { MESSAGE_BROKER_URL, EXCHANGE_NAME } from '../config/envKeys';
 
 module.exports.getHourAndMinutes = () => {
 	let today = new Date();
@@ -35,7 +34,6 @@ module.exports.createChannel = async () => {
 };
 
 //publish message
-
 module.exports.publishMessage = async (channel, binding_key, message) => {
 	try {
 		await channel.publish(EXCHANGE_NAME, binding_key, Buffer.from(message), {persistent: true});
@@ -96,20 +94,6 @@ module.exports.subscribeReplyMessage = async (channel, binding_key, queueName, u
 	}
 };
 
-module.exports.returnResponseTrue = async (req, res, data) => {
-	console.log('returnResponseTrue');
-	console.log('trueData: ', data);
-	return {type: true, message: 'success', data}; 
-	/*
-	 * try {
-	 * return res.status(200).json(data); 
-	 * }
-	 * catch (error) {
-	 * console.log('error0->', error.message);
-	 * } 
-	 */
-};
-
 const createClient = rabbitmqconn =>
 	amqlib
 		.connect(rabbitmqconn)
@@ -144,54 +128,21 @@ const sendRPCMessage = async (channel, message, rpcQueue) => {
 	return returnedMessage;
 };
 
-const pleaseSendMessage = async (message, QUEUE_NAME) => {
-	consola.info({message: `CHANNEL CREATED FOR ${AUTH_QUEUE_NAME}`, badge: true});
-
-	const channels = await amqlib.connect(MESSAGE_BROKER_URL)
-		.then(conn => conn.createChannel())
-		.then(channel => {
-			channel.responseEmitter = new EventEmitter();
-			channel.responseEmitter.setMaxListeners(0);
-			channel.consume(
-				QUEUE_NAME,
-				msg => {
-					channel.responseEmitter.emit(
-						msg.properties.correlationId,
-						msg.content.toString('utf8'),
-					);
-				},
-				{ noAck: true },
-			);
-
-			console.log(' MESSAGE SENT for ', QUEUE_NAME, message);
-
-			// eslint-disable-next-line no-undef
-			new Promise(resolve => {
-				const correlationId = uuidv4();		
-				channel.responseEmitter.once(correlationId, resolve);
-				channel.sendToQueue(QUEUE_NAME, Buffer.from(JSON.stringify(message)), {
-					correlationId,
-					replyTo: QUEUE_NAME 
-				});
-			});	
-		});
-
-	/** ************************* */	
-};
-
-module.exports.sendMessageToQueue = async (message, QUEUE_NAME) => {
+module.exports.sendMessageToQueue = async (event, message, QUEUE_NAME) => {
 	const channel = await createClient(MESSAGE_BROKER_URL);
 	
 	consola.info({
-		message: `[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${QUEUE_NAME}, ${message}`,
+		message: `[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${QUEUE_NAME}`,
 		badge: true
 	});
 
-	const returnedData = await sendRPCMessage(channel, JSON.stringify({event: 'LOGIN', data: message}), QUEUE_NAME);
+	const returnedData = await sendRPCMessage(channel, JSON.stringify({event, data: message}), QUEUE_NAME);
 
 	consola.info({
-		message: `[ ${ getHourAndMinuteLocal() } ] returned message received: ${returnedData}`,
-		 badge: true
+		message: `[ ${ getHourAndMinuteLocal() } ] returned message received `,
+		badge: true
 	});
+
+	channel.close();
 	return returnedData;
 };
