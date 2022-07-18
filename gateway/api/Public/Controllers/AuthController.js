@@ -14,15 +14,9 @@
  * @property {string} password
  */
 
-import { v4 as uuidv4 } from 'uuid';
+import { AUTH_QUEUE_NAME, CREATE_NEW_USER_BINDING_KEY } from '../../src/config/envKeys';
 
-import AuthService from '../Services/AuthService';
-import AuthValidation from '../Validation/AuthValidation';
-import consola from 'consola';
-
-import { AUTH_QUEUE_NAME } from '../../src/config/envKeys';
-
-import { sendMessageToQueue } from '../../src/utils/index';
+import { sendMessageToQueue, createChannel, publishMessage } from '../../src/utils/index';
 
 class AuthController{
 
@@ -43,7 +37,19 @@ class AuthController{
 			
 			const data = JSON.parse(resData);
 			if (!data.type) return res.status(403).json(data);
-			else return res.status(200).json(data);
+			else {
+				const channel = await createChannel();
+				await publishMessage(channel, CREATE_NEW_USER_BINDING_KEY, JSON.stringify({
+					services: [
+						'fs_service:user',
+						'ss_service:admin'
+					],
+					data
+				}));
+				channel.close();
+
+				return res.status(200).json(data);
+			}
 		}
 		catch (error) {
 			res.json({type: false, message: error.message});

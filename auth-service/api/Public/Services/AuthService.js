@@ -46,7 +46,13 @@ class AuthService{
 
 			return {
 				type: true,
-				message: 'User created'
+				message: 'User created',
+				data: {
+					id: user.id,
+					name: user.name,
+					email: user.email,
+					isDeleted: user.isDeleted
+				}
 			};
 		}
 		catch (error) {

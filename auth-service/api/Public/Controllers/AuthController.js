@@ -46,7 +46,7 @@ class AuthController{
 				const result = await AuthService.register(data);
 
 				if (result.type) {
-					returnedData = {type: true, message: result.message};
+					returnedData = {type: true, message: result.message, data: result.data};
 				}
 				else {
 					returnedData = {type: false, message: result.message};

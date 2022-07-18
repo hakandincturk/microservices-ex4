@@ -36,11 +36,12 @@ module.exports.createChannel = async () => {
 //publish message
 module.exports.publishMessage = async (channel, binding_key, message) => {
 	try {
-		await channel.publish(EXCHANGE_NAME, binding_key, Buffer.from(message), {persistent: true});
+		console.log('publish message worked, ', message);
+		await channel.publish(EXCHANGE_NAME, binding_key, Buffer.from(message));
 		console.log('Message has been sent ' + message);
 	}
 	catch (error) {
-		console.log(`error, ${error.message}`);
+		console.log(`publish message error, ${error.message}`);
 	}
 };
 
