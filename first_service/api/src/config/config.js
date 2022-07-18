@@ -4,21 +4,21 @@ module.exports = {
 	development: {
 		username: DB_USERNAME,
 		password: DB_PASSWORD,
-		database: 'micro_test_dev',
+		database: 'micro_fs_service_dev',
 		host: DB_HOST,
 		dialect: 'postgres'
 	},
 	test: {
 		username: DB_USERNAME,
 		password: DB_PASSWORD,
-		database: 'micro_test_test',
+		database: 'micro_fs_service_test',
 		host: DB_HOST,
 		dialect: 'postgres'
 	},
 	production: {
 		username: DB_USERNAME,
 		password: DB_PASSWORD,
-		database: 'micro_test_prod',
+		database: 'micro_fs_service_prod',
 		host: DB_HOST,
 		dialect: 'postgres'
 	}

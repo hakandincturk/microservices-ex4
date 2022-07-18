@@ -1,4 +1,6 @@
 const amqlib = require('amqplib');
+import EventEmitter from 'events';
+import { v4 as uuidv4 } from 'uuid';
 import consola from 'consola';
 
 import { MESSAGE_BROKER_URL, EXCHANGE_NAME } from '../config/envKeys';
@@ -67,4 +69,57 @@ module.exports.subscribeMessage = async (channel, controller, binding_key, queue
 	catch (error) {
 		throw error;
 	}
+};
+
+const createClient = rabbitmqconn =>
+	amqlib
+		.connect(rabbitmqconn)
+		.then(conn => conn.createChannel())
+		.then(channel => {
+			channel.responseEmitter = new EventEmitter();
+			channel.responseEmitter.setMaxListeners(0);
+			console.log('createClient clg');
+			channel.consume(
+				'amq.rabbitmq.reply-to',
+				msg => {
+					channel.responseEmitter.emit(
+						msg.properties.correlationId,
+						msg.content.toString('utf8'),
+					);
+				},
+				{ noAck: true },
+			);
+			return channel;
+		});
+
+const sendRPCMessage = async (channel, message, rpcQueue) => {
+	// eslint-disable-next-line no-undef
+	 const returnedMessage = await new Promise((resolve) => {
+		const correlationId = uuidv4();
+		channel.responseEmitter.once(correlationId, resolve);
+		channel.sendToQueue(rpcQueue, Buffer.from(message), {
+			correlationId,
+			replyTo: 'amq.rabbitmq.reply-to'
+		});
+	});
+	return returnedMessage;
+};
+
+module.exports.sendMessageToQueue = async (event, message, QUEUE_NAME) => {
+	const channel = await createClient(MESSAGE_BROKER_URL);
+	
+	consola.info({
+		message: `[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${QUEUE_NAME}`,
+		badge: true
+	});
+
+	const returnedData = await sendRPCMessage(channel, JSON.stringify({event, data: message}), QUEUE_NAME);
+
+	consola.info({
+		message: `[ ${ getHourAndMinuteLocal() } ] returned message received `,
+		badge: true
+	});
+
+	channel.close();
+	return returnedData;
 };
