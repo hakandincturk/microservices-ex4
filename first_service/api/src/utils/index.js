@@ -71,6 +71,55 @@ module.exports.subscribeMessage = async (channel, controller, binding_key, queue
 	}
 };
 
+module.exports.subscribeMessageWithoutController = async (channel, binding_key, queueName) => {
+	try {
+
+		const open = amqlib.connect(MESSAGE_BROKER_URL);
+
+		consola.info({message: `${binding_key} is listening.`, badge: true});
+	
+		open
+			.then(function (conn) {
+				console.log(`[ ${ getHourAndMinuteLocal() } ] Server started`);
+				return conn.createChannel();
+			})
+			.then(async function (ch) {
+				return ch.assertQueue(queueName).then(function (ok) {
+					return ch.consume(queueName, function (msg) {
+						console.log(
+							`[ ${ getHourAndMinuteLocal() } ] Message received: ${JSON.stringify(
+								JSON.parse(msg.content.toString('utf8')),
+							)}`,
+						);
+
+						const parsedData = JSON.parse(msg.content.toString());
+			
+						const controllerName = parsedData.data.newUrl
+							.slice(1, parsedData.data.newUrl.length)
+							.split('/')[0];
+						const controllerNameWithUpperCase = controllerName[0].toUpperCase() + controllerName.slice(1);
+
+						try {
+							let routeFile = require(
+								`../../Private/Routes/${controllerNameWithUpperCase}Route`
+							).default;
+							routeFile.subscribeEvents( ch, msg );
+							ch.ack(msg);
+						}
+						catch (_) {
+							// TODO return response error
+							consola.error({message: _.message, badge: true});
+						}
+					});
+				});
+			})
+			.catch(e => console.error(e.message));
+	}
+	catch (error) {
+		throw error;
+	}
+};
+
 const createClient = rabbitmqconn =>
 	amqlib
 		.connect(rabbitmqconn)

@@ -118,7 +118,7 @@ const createClient = rabbitmqconn =>
 
 const sendRPCMessage = async (channel, message, rpcQueue) => {
 	// eslint-disable-next-line no-undef
-	 const returnedMessage = await new Promise((resolve) => {
+	const returnedMessage = await new Promise((resolve) => {
 		const correlationId = uuidv4();
 		channel.responseEmitter.once(correlationId, resolve);
 		channel.sendToQueue(rpcQueue, Buffer.from(message), {

@@ -6,7 +6,7 @@ module.exports = {
 	'parser': '@babel/eslint-parser',
 	'parserOptions': {
 		'sourceType': 'module',
-		'babelOptions': { 'configFile': './first_service/.babelrc' }
+		'babelOptions': { 'configFile': './gateway/.babelrc' }
 	},
 	'extends': [ 'eslint:recommended' ],
 	'rules': {
@@ -48,10 +48,6 @@ module.exports = {
 		'array-bracket-spacing': [
 			'error',
 			'always'
-		],
-		'multiline-comment-style': [
-			'error',
-			'starred-block'
 		],
 		'padded-blocks': [
 			'error',

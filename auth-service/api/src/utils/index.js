@@ -75,6 +75,6 @@ module.exports.subsMessage = async (controller, QUEUE_NAME) => {
 				});
 			});
 		})
-		.catch(console.warn);
+		.catch(e => console.error(e.message));
 
 };

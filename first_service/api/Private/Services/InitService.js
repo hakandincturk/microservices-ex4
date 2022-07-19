@@ -44,6 +44,10 @@ class InitService{
 	 */
 	}
 
+	static async first(){
+		return ({type: true, message: 'init service working successfuly'});		
+	}
+
 }
 
 export default InitService;

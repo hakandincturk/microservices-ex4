@@ -1,9 +1,20 @@
-import express from 'express';
+class InitRoute{
 
-import InitController from '../Controllers/InitController';
+	static async subscribeEvents(ch, msg){
+		const { data } = JSON.parse(msg.content.toString());
 
-const app = express();
+		switch (data.url) {
+		case value:
+        
+			break;
+    
+		default:
+			break;
+		}
 
-app.get('/health', InitController.health);
+		console.log('InitController.js, ', data);
+	}
 
-module.exports = app;
+}
+
+export default InitRoute;
