@@ -32,7 +32,7 @@ class AuthController{
 		try {
 
 			const message = req.body;
-
+			
 			const resData = await sendMessageToQueue('REGISTER', message, AUTH_QUEUE_NAME);
 			
 			const data = JSON.parse(resData);

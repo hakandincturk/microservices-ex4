@@ -1,6 +1,66 @@
 import InitService from '../Services/InitService';
 import { StatusCodes } from 'http-status-codes';
+import consola from 'consola';
+
+import { getHourAndMinutes } from '../../src/utils/index';
+
 class InitController{
+
+	static async createInitMethod(ch, msg, data){
+		try {
+			const result = await InitService.createInitMethod(data);
+
+			ch.sendToQueue(
+				msg.properties.replyTo,
+				Buffer.from(JSON.stringify({
+					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+					result
+				})),
+				{
+					correlationId: msg.properties.correlationId
+				}
+			);
+			ch.ack(msg);
+
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent: ${{
+					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+					result
+				}}`, 
+			);
+		}
+		catch (_) {
+			consola.error({message: `InitController.js -> ${_.message}`, badge: true});
+		}
+	}
+
+	static async getInitMethod(ch, msg){
+		try {
+			const result = await InitService.getInitMethod();
+
+			ch.sendToQueue(
+				msg.properties.replyTo,
+				Buffer.from(JSON.stringify({
+					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+					result
+				})),
+				{
+					correlationId: msg.properties.correlationId
+				}
+			);
+			ch.ack(msg);
+
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent: ${{
+					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+					result
+				}}`, 
+			);
+		}
+		catch (_) {
+			consola.error({message: `InitController.js -> ${_.message}`, badge: true});
+		}
+	}
 
 	static async createNewUser(data, role){
 

@@ -9,6 +9,8 @@ import publicRoutes from './Public/index';
 import privateRoutes from './Private/index';
 import { swaggerOptions } from './src/config/swaggerOptions';
 
+import {createClient} from './src/utils/index'; 
+
 const startServer = async () => {
 	const PORT = process.env.PORT || 5000;
 	const app = express();
@@ -18,11 +20,8 @@ const startServer = async () => {
 	app.use(cors());
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: true }));
-
-	/*
-	 * const channel = await createClient();
-	 * app.use(constChannel(channel)); 
-	 */
+	
+	global.rabbitmqClient = await createClient();
 
 	app.use('/', publicRoutes);
 	app.use('/', privateRoutes);

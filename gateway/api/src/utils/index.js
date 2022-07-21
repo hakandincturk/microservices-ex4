@@ -95,7 +95,7 @@ module.exports.subscribeReplyMessage = async (channel, binding_key, queueName, u
 	}
 };
 
-const createClient = rabbitmqconn =>
+module.exports.createClient = rabbitmqconn =>
 	amqlib
 		.connect(rabbitmqconn)
 		.then(conn => conn.createChannel())
@@ -130,8 +130,8 @@ const sendRPCMessage = async (channel, message, rpcQueue) => {
 };
 
 module.exports.sendMessageToQueue = async (event, message, QUEUE_NAME) => {
-	const channel = await createClient(MESSAGE_BROKER_URL);
-	
+	// const channel = await createClient(MESSAGE_BROKER_URL);
+	const channel = global.rabbitmqClient;
 	consola.info({
 		message: `[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${QUEUE_NAME}`,
 		badge: true
@@ -144,6 +144,5 @@ module.exports.sendMessageToQueue = async (event, message, QUEUE_NAME) => {
 		badge: true
 	});
 
-	channel.close();
 	return returnedData;
 };

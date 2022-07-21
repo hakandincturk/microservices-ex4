@@ -31,7 +31,7 @@ module.exports.createChannel = async () => {
 };
 
 //publish message
-module.exports.publishMessage = async (channel, binding_key, message) => {
+/* module.exports.publishMessage = async (channel, binding_key, message) => {
 	try {
 		await channel.publish(EXCHANGE_NAME, binding_key, Buffer.from(message), {persistent: true});
 		console.log('Message has been sent ' + message);
@@ -39,7 +39,7 @@ module.exports.publishMessage = async (channel, binding_key, message) => {
 	catch (error) {
 		console.log(`error, ${error.message}`);
 	}
-};
+}; */
 
 module.exports.subscribeMessage = async (channel, controller, binding_key, queueName) => {
 	try {
@@ -74,53 +74,53 @@ module.exports.subscribeMessage = async (channel, controller, binding_key, queue
 module.exports.subscribeMessageWithoutController = async (channel, binding_key, queueName) => {
 	try {
 
-		const open = amqlib.connect(MESSAGE_BROKER_URL);
+		// const open = amqlib.connect(MESSAGE_BROKER_URL);
 
-		consola.info({message: `${binding_key} is listening.`, badge: true});
+		// consola.info({message: `${binding_key} is listening.`, badge: true});
 	
-		open
-			.then(function (conn) {
-				console.log(`[ ${ getHourAndMinuteLocal() } ] Server started`);
-				return conn.createChannel();
-			})
-			.then(async function (ch) {
-				return ch.assertQueue(queueName).then(function (ok) {
-					return ch.consume(queueName, function (msg) {
-						console.log(
-							`[ ${ getHourAndMinuteLocal() } ] Message received: ${JSON.stringify(
-								JSON.parse(msg.content.toString('utf8')),
-							)}`,
-						);
+		// open
+		// 	.then(function (conn) {
+		// 		console.log(`[ ${ getHourAndMinuteLocal() } ] Server started`);
+		// 		// return conn.createChannel();
+		// 	})
+		// 	.then(async function (ch) {
+		// 		return 
+		channel.assertQueue(queueName).then(function (ok) {
+			return channel.consume(queueName, function (msg) {
+				console.log(
+					`[ ${ getHourAndMinuteLocal() } ] Message received: ${JSON.stringify(
+						JSON.parse(msg.content.toString('utf8')),
+					)}`,
+				);
 
-						const parsedData = JSON.parse(msg.content.toString());
-			
-						const controllerName = parsedData.data.newUrl
-							.slice(1, parsedData.data.newUrl.length)
-							.split('/')[0];
-						const controllerNameWithUpperCase = controllerName[0].toUpperCase() + controllerName.slice(1);
+				const parsedData = JSON.parse(msg.content.toString());
+									
+				const controllerName = parsedData.data.url
+					.slice(1, parsedData.data.url.length)
+					.split('/')[0];
+				const controllerNameWithUpperCase = controllerName[0].toUpperCase() + controllerName.slice(1);
 
-						try {
-							let routeFile = require(
-								`../../Private/Routes/${controllerNameWithUpperCase}Route`
-							).default;
-							routeFile.subscribeEvents( ch, msg );
-							ch.ack(msg);
-						}
-						catch (_) {
-							// TODO return response error
-							consola.error({message: _.message, badge: true});
-						}
-					});
-				});
-			})
-			.catch(e => console.error(e.message));
+				try {
+					let routeFile = require(
+						`../../Private/Routes/${controllerNameWithUpperCase}Route`
+					).default;
+					routeFile.subscribeEvents( channel, msg );
+				}
+				catch (_) {
+					// TODO return response error
+					consola.error({message: _.message, badge: true});
+				}
+			});
+		});
+		// })
+		// .catch(e => console.error(e.message));
 	}
 	catch (error) {
 		throw error;
 	}
 };
 
-const createClient = rabbitmqconn =>
+/* const createClient = rabbitmqconn =>
 	amqlib
 		.connect(rabbitmqconn)
 		.then(conn => conn.createChannel())
@@ -171,4 +171,4 @@ module.exports.sendMessageToQueue = async (event, message, QUEUE_NAME) => {
 
 	channel.close();
 	return returnedData;
-};
+}; */
