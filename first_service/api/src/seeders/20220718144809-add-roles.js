@@ -9,6 +9,16 @@ module.exports = {
 				updatedAt: new Date()
 			}, 
 			{
+				name: 'type2-admin',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			},
+			{
+				name: 'type3-admin',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			},
+			{
 				name: 'user',
 				createdAt: new Date(),
 				updatedAt: new Date()

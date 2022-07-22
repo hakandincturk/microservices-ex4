@@ -1,11 +1,15 @@
+/* eslint-disable no-case-declarations */
 import InitContoller from '../Controllers/InitController';
+import { StatusCodes } from 'http-status-codes';
+
+import CheckPermission from '../Middlewares/checkPermission';
 
 class InitRoute{
 
 	static async subscribeEvents(ch, msg){
 		const { data } = JSON.parse(msg.content.toString());
 		
-		// const token = data.token;
+		const token = data.token;
 		const reqMethod = data.reqMethod;
 		const reqUrl = data.url.split('/');
 		let url = '';
@@ -19,10 +23,43 @@ class InitRoute{
 		case '/add':
 			switch (reqMethod){
 			case 'POST':
-				InitContoller.createInitMethod(ch, msg, data.data);
+				const result = await CheckPermission.checkPermission(token, 'permission-one');
+				if (!result.type){
+					ch.sendToQueue(
+						msg.properties.replyTo,
+						Buffer.from(JSON.stringify({
+							status: StatusCodes.UNAUTHORIZED,
+							result: 'access denied'
+						})),
+						{
+							correlationId: msg.properties.correlationId
+						}
+					);
+					ch.ack(msg);
+				}
+				else {
+					InitContoller.createInitMethod(ch, msg, data.data);
+				}
 				break;
 			case 'GET':
-				InitContoller.getInitMethod(ch, msg);
+				const checkPerm = await CheckPermission.checkPermission(token, 'permission-two');
+
+				if (!checkPerm.type){
+					ch.sendToQueue(
+						msg.properties.replyTo,
+						Buffer.from(JSON.stringify({
+							status: StatusCodes.UNAUTHORIZED,
+							result: checkPerm
+						})),
+						{
+							correlationId: msg.properties.correlationId
+						}
+					);
+					ch.ack(msg);
+				}
+				else {
+					InitContoller.getInitMethod(ch, msg);				
+				}
 				break;
 			}
 			break;
