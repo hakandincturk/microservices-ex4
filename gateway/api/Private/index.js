@@ -4,12 +4,8 @@ import fs from 'fs';
 import checkAuth from './middlewares/checkAuth';
 
 import {
-	AUTH_EXCHANGE_NAME, FS_EXCHANGE_NAME,
-	AUTH_LOGIN_BINDING_KEY, AUTH_LOGIN_QUEUE_NAME,
-	AUTH_REGISTER_BINDING_KEY, AUTH_REGISTER_QUEUE_NAME,
-	AUTH_CHECK_ROLE_BINDING_KEY, AUTH_CHECK_ROLE_QUEUE_NAME,
-	FS_CREATE_NEW_USER_BINDING_KEY, FS_CREATE_NEW_USER_QUEUE_NAME,
-	FS_INIT_BINDING_KEY, FS_INIT_QUEUE_NAME
+	AUTH_EXCHANGE_NAME, FS_EXCHANGE_NAME, SS_EXCHANGE_NAME,
+	FS_CREATE_NEW_USER_BINDING_KEY, FS_CREATE_NEW_USER_QUEUE_NAME
 } from '../src/config/envKeys';
 
 import { createClientWithExchange, bindQueueAndExchange } from '../src/utils/index';
@@ -24,9 +20,11 @@ const src = async () => {
 
 		const authChannel = await createClientWithExchange(AUTH_EXCHANGE_NAME);
 		const fsChannel = await createClientWithExchange(FS_EXCHANGE_NAME);
+		const ssChannel = await createClientWithExchange(SS_EXCHANGE_NAME);
 
 		global.authChannel = authChannel;
 		global.fsChannel = fsChannel;
+		global.ssChannel = ssChannel;
 
 		console.log('');
 	

@@ -2,7 +2,9 @@
 /gateway/node_modules
 /auth_service/node_modules
 /first_service/node_modules
+/second_service/node_modules
 
 /gateway/.env
 /auth_service/.env
 /first_service/.env
+/second_service/.env

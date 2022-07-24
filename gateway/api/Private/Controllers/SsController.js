@@ -9,6 +9,8 @@ class FsController{
 			const reqUrl = req.originalUrl.slice(1, req.originalUrl.length).split('/');
 			const reqMethod = req.method;
 
+			console.log('reqUrl', req.originalUrl);
+
 			let newUrl = '/';
 
 			for (let i = 2;i < reqUrl.length;i++) {
@@ -16,10 +18,10 @@ class FsController{
 			}
 
 			newUrl = newUrl.slice(0, newUrl.length-1);
-			const bindingAndQueueKey =  `FS_SERVICE.${newUrl.split('/')[1].toUpperCase()}`;
+			const bindingAndQueueKey =  `SS_SERVICE.${newUrl.split('/')[1].toUpperCase()}`;
 
 			const resData = await sendMessageToQueue(
-				global.fsChannel,
+				global.ssChannel,
 				{
 					token,
 					url: newUrl,

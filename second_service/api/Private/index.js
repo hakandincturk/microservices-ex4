@@ -42,10 +42,10 @@ const start = async () => {
 			const routeName = file.slice(0, file.length - 8);
 			let routeFile = require(`./Routes/${routeName}Route`);
 
-			const bindingKey =  `FS_SERVICE.${routeName.toUpperCase()}`;
+			const bindingKey =  `SS_SERVICE.${routeName.toUpperCase()}`;
 
 			subscribeMessageWithRoute(
-				global.fsChannel,
+				global.ssChannel,
 				bindingKey,
 				routeFile,
 			);

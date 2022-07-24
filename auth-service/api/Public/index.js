@@ -7,7 +7,11 @@ import {
 	subscribeMessageWithRoute
 } from '../src/utils/index';
 
-import { AUTH_EXCHANGE_NAME, FS_EXCHANGE_NAME } from '../src/config/envKeys';
+import { 
+	AUTH_EXCHANGE_NAME,
+	FS_EXCHANGE_NAME,
+	SS_EXCHANGE_NAME
+} from '../src/config/envKeys';
 
 const app = express();
 
@@ -15,9 +19,11 @@ const createChannels = async () => {
 
 	const authChannel = await createClientWithExchange(AUTH_EXCHANGE_NAME);
 	const fsChannel = await createClientWithExchange(FS_EXCHANGE_NAME);
+	const ssChannel = await createClientWithExchange(SS_EXCHANGE_NAME);
 
 	global.authChannel = authChannel;
 	global.fsChannel = fsChannel;
+	global.ssChannel = ssChannel;
 
 	console.log('');
 

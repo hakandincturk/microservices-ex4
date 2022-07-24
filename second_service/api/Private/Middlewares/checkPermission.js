@@ -10,6 +10,7 @@ class CheckPermission{
 		try {
 			const pureToken = token.split(' ')[1];
 			const tokenData = await jwt.verify(pureToken, JWT_SECRET);
+			console.log('CheckPermission.js -> ', tokenData.user_id);
 	
 			const result = await db.Users.findOne({
 				where: {id: tokenData.user_id},
@@ -26,6 +27,7 @@ class CheckPermission{
 				} 
 			});
 
+			console.log('checkPerm.js -> ', result);
 			if (result.Roles.length === 0) return {type: false, message: 'access denied'};
 			else return {type: true};
 		}
