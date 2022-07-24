@@ -14,9 +14,12 @@
  * @property {string} password
  */
 
-import { AUTH_QUEUE_NAME, CREATE_NEW_USER_BINDING_KEY } from '../../src/config/envKeys';
+import {
+	AUTH_EXCHANGE_NAME,
+	FS_CREATE_NEW_USER_BINDING_KEY
+} from '../../src/config/envKeys';
 
-import { sendMessageToQueue, createChannel, publishMessage } from '../../src/utils/index';
+import { sendMessageToQueue, publishMessage } from '../../src/utils/index';
 
 class AuthController{
 
@@ -32,23 +35,48 @@ class AuthController{
 		try {
 
 			const message = req.body;
-			
-			const resData = await sendMessageToQueue('REGISTER', message, AUTH_QUEUE_NAME);
-			
-			const data = JSON.parse(resData);
-			if (!data.type) return res.status(403).json(data);
-			else {
-				const channel = await createChannel();
-				await publishMessage(channel, CREATE_NEW_USER_BINDING_KEY, JSON.stringify({
-					services: [
-						'fs_service:user',
-						'ss_service:admin'
-					],
-					data
-				}));
-				channel.close();
+			const reqUrl = req.originalUrl.slice(1, req.originalUrl.length).split('/');
+			const reqMethod = req.method;
 
-				return res.status(200).json(data);
+			let newUrl = '/';
+
+			for (let i = 1;i < reqUrl.length;i++) {
+				newUrl += reqUrl[i] + '/';				
+			}
+
+			newUrl = newUrl.slice(0, newUrl.length-1);
+			const bindingAndQueueKey =  `AUTH_SERVICE.${newUrl.split('/')[1].toUpperCase()}`;
+			
+			const resData = await sendMessageToQueue(
+				global.authChannel,
+				{
+					url: newUrl,
+					reqMethod,
+					data: message
+				},
+				bindingAndQueueKey
+			);
+			
+			const parsedResData = JSON.parse(resData);
+			
+			if (!parsedResData.type) return res.status(403).json(parsedResData);
+			else {
+				// TODO: karşılığını yaz 
+				await publishMessage(
+					AUTH_EXCHANGE_NAME,
+					global.authChannel,
+					FS_CREATE_NEW_USER_BINDING_KEY,
+					JSON.stringify({
+						services: [
+							'fs_service:user',
+							'ss_service:admin'
+						],
+						parsedResData
+					})
+				);
+				
+				return res.status(parsedResData.status).json(parsedResData.result);
+
 			}
 		}
 		catch (error) {
@@ -68,13 +96,37 @@ class AuthController{
 		try {
 
 			const message = req.body;
+			const reqUrl = req.originalUrl.slice(1, req.originalUrl.length).split('/');
+			const reqMethod = req.method;
 
-			const resData = await sendMessageToQueue('LOGIN', message, AUTH_QUEUE_NAME);
+			let newUrl = '/';
 
-			const data = JSON.parse(resData);
+			for (let i = 1;i < reqUrl.length;i++) {
+				newUrl += reqUrl[i] + '/';				
+			}
 
-			if (!data.type) return res.status(403).json(data);
-			else return res.status(200).json(data);
+			newUrl = newUrl.slice(0, newUrl.length-1);
+
+			const bindingAndQueueKey =  `AUTH_SERVICE.${reqUrl[0].toUpperCase()}`;
+
+			console.log('bindingAndQueueKey', bindingAndQueueKey);
+			
+			const resData = await sendMessageToQueue(
+				global.authChannel,
+				{
+					url: newUrl,
+					reqMethod,
+					data: message
+				},
+				bindingAndQueueKey
+			);
+			
+			const parsedResData = JSON.parse(resData);
+
+			console.log('parsedResData', parsedResData);
+
+			if (!parsedResData.type) return res.status(403).json(parsedResData);
+			else return res.status(200).json(parsedResData);
 			
 		}
 		catch (error) {

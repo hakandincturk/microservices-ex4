@@ -1,5 +1,6 @@
 import db from '../../src/models';
 import jwt from 'jsonwebtoken';
+import consola from 'consola';
 
 import { JWT_SECRET } from '../../src/config/envKeys';
 
@@ -31,6 +32,7 @@ class CheckPermission{
 			else return {type: true};
 		}
 		catch (error) {
+			consola.error(error.message);
 			return { type: false, message: error.message };
 		}
 

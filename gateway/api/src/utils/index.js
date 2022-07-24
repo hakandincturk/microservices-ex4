@@ -17,27 +17,15 @@ const getHourAndMinuteLocal = () => {
 	return time;
 };
 
-//message broker
-
-//create channel
-module.exports.createChannel = async () => {
-	try {
-		const connection = await amqlib.connect(MESSAGE_BROKER_URL);
-		const channel = await connection.createChannel();
-		await channel.assertExchange(EXCHANGE_NAME, 'direct', false);
-		console.log('AMQP CREATED CHANNEL');
-		return channel;
-	}
-	catch (error) {
-		console.log(`error, ${error.message}`);
-	}
-};
-
 //publish message
-module.exports.publishMessage = async (channel, binding_key, message) => {
+module.exports.publishMessage = async (exchangeName, channel, BINDING_KEY, message) => {
 	try {
 		console.log('publish message worked, ', message);
-		await channel.publish(EXCHANGE_NAME, binding_key, Buffer.from(message));
+		await channel.publish(
+			exchangeName,
+			BINDING_KEY,
+			Buffer.from(message)
+		);
 		console.log('Message has been sent ' + message);
 	}
 	catch (error) {
@@ -48,8 +36,7 @@ module.exports.publishMessage = async (channel, binding_key, message) => {
 module.exports.subscribeMessage = async (channel, service, binding_key, queueName) => {
 	try {
 		const appQueue = await channel.assertQueue(queueName);
-					
-		channel.bindQueue(appQueue.queue, EXCHANGE_NAME, binding_key);
+		// channel.bindQueue(appQueue.queue, EXCHANGE_NAME, binding_key);
 		channel.consume(appQueue.queue, data => {
 			console.log(`${binding_key} recieved data`);
 			console.log(data.content.toString());
@@ -95,49 +82,66 @@ module.exports.subscribeReplyMessage = async (channel, binding_key, queueName, u
 	}
 };
 
-module.exports.createClient = rabbitmqconn =>
-	amqlib
-		.connect(rabbitmqconn)
-		.then(conn => conn.createChannel())
-		.then(channel => {
-			channel.responseEmitter = new EventEmitter();
-			channel.responseEmitter.setMaxListeners(0);
-			console.log('createClient clg');
-			channel.consume(
-				'amq.rabbitmq.reply-to',
-				msg => {
-					channel.responseEmitter.emit(
-						msg.properties.correlationId,
-						msg.content.toString('utf8'),
-					);
-				},
-				{ noAck: true },
-			);
-			return channel;
-		});
+module.exports.createClientWithExchange = async (exchangeName) => {
 
-const sendRPCMessage = async (channel, message, rpcQueue) => {
+	try {
+		const con = await amqlib.connect(MESSAGE_BROKER_URL);
+		const channel = await con.createChannel();
+		await channel.assertExchange(exchangeName, 'direct', false);
+		
+		channel.responseEmitter = new EventEmitter();
+		channel.responseEmitter.setMaxListeners(0);
+		channel.consume(
+			'amq.rabbitmq.reply-to',
+			msg => {
+				channel.responseEmitter.emit(
+					msg.properties.correlationId,
+					msg.content.toString('utf8'),
+				);
+			},
+			{ noAck: true },
+		);
+
+		consola.info(`{declared} [utils.js] -> [createClientWithExchange] ${exchangeName}`);
+			
+		return channel;
+	}
+	catch (_) {
+		consola.error('[utils.js] -> [createClientWithExchange.error] ->', _.message);
+		throw _;
+	}
+};
+
+const sendRPCMessage = async (channel, message, BINDING_KEY) => {
+
 	// eslint-disable-next-line no-undef
 	const returnedMessage = await new Promise((resolve) => {
 		const correlationId = uuidv4();
 		channel.responseEmitter.once(correlationId, resolve);
-		channel.sendToQueue(rpcQueue, Buffer.from(message), {
-			correlationId,
-			replyTo: 'amq.rabbitmq.reply-to'
-		});
+		channel.sendToQueue(
+			BINDING_KEY,
+			Buffer.from(message),
+			{
+				correlationId,
+				replyTo: 'amq.rabbitmq.reply-to'
+			});
 	});
 	return returnedMessage;
 };
 
-module.exports.sendMessageToQueue = async (event, message, QUEUE_NAME) => {
+module.exports.sendMessageToQueue = async (channel, message, BINDING_KEY) => {
 	// const channel = await createClient(MESSAGE_BROKER_URL);
-	const channel = global.rabbitmqClient;
+	// const channel = global.rabbitMqConn;
 	consola.info({
-		message: `[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${QUEUE_NAME}`,
+		message: `[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${BINDING_KEY}`,
 		badge: true
 	});
 
-	const returnedData = await sendRPCMessage(channel, JSON.stringify({event, data: message}), QUEUE_NAME);
+	const returnedData = await sendRPCMessage(
+		channel,
+		JSON.stringify({ data: message }),
+		BINDING_KEY
+	);
 
 	consola.info({
 		message: `[ ${ getHourAndMinuteLocal() } ] returned message received `,
@@ -145,4 +149,15 @@ module.exports.sendMessageToQueue = async (event, message, QUEUE_NAME) => {
 	});
 
 	return returnedData;
+};
+
+module.exports.bindQueueAndExchange = async ( channel, exchangeName, bindingKey, queueName) => {
+	try {
+		const appQueue = await channel.assertQueue(queueName);
+		channel.bindQueue(appQueue.queue, exchangeName, bindingKey);	
+		consola.info('{created} [utils.js] -> [bindQueueAndExchange].queue  -> ', queueName);
+	}
+	catch (_) {
+		consola.error('[utils.js] -> [bindQueueAndExchange].error -> ', _.message);
+	}
 };

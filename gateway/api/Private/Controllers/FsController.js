@@ -12,21 +12,22 @@ class FsController{
 
 			let newUrl = '/';
 
-			for (let i = 1;i < reqUrl.length;i++) {
+			for (let i = 2;i < reqUrl.length;i++) {
 				newUrl += reqUrl[i] + '/';				
 			}
 
 			newUrl = newUrl.slice(0, newUrl.length-1);
+			const bindingAndQueueKey =  `FS_SERVICE.${newUrl.split('/')[1].toUpperCase()}`;
 
 			const resData = await sendMessageToQueue(
-				'FS_SERVICE',
+				global.fsChannel,
 				{
 					token,
 					url: newUrl,
 					reqMethod,
 					data: req.body
 				},
-				FS_SERVICE_QUEUE_NAME
+				bindingAndQueueKey
 			);
 
 			const parsedResData = JSON.parse(resData);

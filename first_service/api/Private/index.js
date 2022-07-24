@@ -1,27 +1,54 @@
 import express from 'express';
-
-import InitController from './Controllers/InitController';
+import fs from 'fs';
 
 import checkAuth from './middlewares/checkAuth';
 
-import { createChannel, subscribeMessage, subscribeMessageWithoutController } from '../src/utils/index';
+import {
+	createClientWithExchange,
+	subscribeMessageWithRoute
+} from '../src/utils/index';
 
 import {
-	CREATE_NEW_USER_BINDING_KEY,
-	CREATE_NEW_USER_QUEUE_NAME,
-	FS_SERVICE_BINDING_KEY,
-	FS_SERVICE_QUEUE_NAME
+	AUTH_EXCHANGE_NAME,
+	FS_EXCHANGE_NAME
 } from '../src/config/envKeys';
 
 const app = express();
 
 app.use(checkAuth);
 
+const createChannels = async () => {
+
+	const authChannel = await createClientWithExchange(AUTH_EXCHANGE_NAME);
+	const fsChannel = await createClientWithExchange(FS_EXCHANGE_NAME);
+
+	global.authChannel = authChannel;
+	global.fsChannel = fsChannel;
+
+	console.log('');
+
+};
+
 const start = async () => {
-	const channel = await createChannel();
-	// subscribeMessage(channel, AuthController, AUTH_BINDING_KEY, AUTH_QUEUE_NAME);
-	subscribeMessage(channel, InitController, CREATE_NEW_USER_BINDING_KEY, CREATE_NEW_USER_QUEUE_NAME);
-	subscribeMessageWithoutController(channel, FS_SERVICE_BINDING_KEY, FS_SERVICE_QUEUE_NAME);
+	await createChannels();
+	
+	fs.readdir('./api/Private/Routes', (err, files) => {
+		if (err) throw err;
+  
+		for (let file of files) {
+			const routeName = file.slice(0, file.length - 8);
+			let routeFile = require(`./Routes/${routeName}Route`);
+
+			const bindingKey =  `FS_SERVICE.${routeName.toUpperCase()}`;
+
+			subscribeMessageWithRoute(
+				global.fsChannel,
+				bindingKey,
+				routeFile,
+			);
+
+		}
+	});
 };
 
 start();

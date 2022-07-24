@@ -1,18 +1,48 @@
 import express from 'express';
+import fs from 'fs';
 
 import authRoutes from './Routes/AuthRoute';
-import { createChannel, subsMessage } from '../src/utils/index';
-import AuthController from './Controllers/AuthController';
+import { 
+	createClientWithExchange,
+	subscribeMessageWithRoute
+} from '../src/utils/index';
 
-import { AUTH_QUEUE_NAME } from '../src/config/envKeys';
+import { AUTH_EXCHANGE_NAME, FS_EXCHANGE_NAME } from '../src/config/envKeys';
 
 const app = express();
 
-const start = async ( )=> {
-	const channel = await createChannel();
-	// subscribeMessage(channel, AuthController, AUTH_BINDING_KEY, AUTH_QUEUE_NAME);
-	subsMessage(AuthController, AUTH_QUEUE_NAME);
+const createChannels = async () => {
 
+	const authChannel = await createClientWithExchange(AUTH_EXCHANGE_NAME);
+	const fsChannel = await createClientWithExchange(FS_EXCHANGE_NAME);
+
+	global.authChannel = authChannel;
+	global.fsChannel = fsChannel;
+
+	console.log('');
+
+};
+
+const start = async ( )=> {
+	await createChannels();
+
+	fs.readdir('./api/Public/Routes', (err, files) => {
+		if (err) throw err;
+  
+		for (let file of files) {
+			const routeName = file.slice(0, file.length - 8);
+			let routeFile = require(`./Routes/${routeName}Route`);
+
+			const bindingKey =  `AUTH_SERVICE.${routeName.toUpperCase()}`;
+
+			subscribeMessageWithRoute(
+				global.authChannel,
+				bindingKey,
+				routeFile,
+			);
+
+		}
+	});
 };
 
 start();
