@@ -1,6 +1,9 @@
 import amqlib from 'amqplib';
+import consola from 'consola';
 
-import { MESSAGE_BROKER_URL, EXCHANGE_NAME } from '../config/envKeys';
+import EventEmitter from 'events';
+
+import { MESSAGE_BROKER_URL, AUTH_EXCHANGE_NAME } from '../config/envKeys';
 
 module.exports.getHourAndMinutes = () => {
 	let today = new Date();
@@ -8,73 +11,81 @@ module.exports.getHourAndMinutes = () => {
 	return time;
 };
 
+const getHourAndMinuteLocal = () => {
+	let today = new Date();
+	let time = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds();
+	return time;
+};
+
 //message broker
 
-//create channel
-module.exports.createChannel = async () => {
-	try {
-		const connection = await amqlib.connect(MESSAGE_BROKER_URL);
-		const channel = await connection.createChannel();
-		await channel.assertExchange(EXCHANGE_NAME, 'direct', false);
-		console.log('AMQP CREATED CHANNEL');
-		return channel;
-	}
-	catch (error) {
-		console.log(`error, ${error.message}`);
-	}
-};
-
 //publish message
-
-module.exports.publishMessage = async (channel, binding_key, message) => {
+module.exports.publishMessage = async (exchangeName, channel, BINDING_KEY, message) => {
 	try {
-		await channel.publish(EXCHANGE_NAME, binding_key, Buffer.from(message), {persistent: true, autoDelete: true});
-		console.log(`Message has been sent to ${binding_key}`, message);
+		await channel.publish(
+			exchangeName,
+			BINDING_KEY,
+			Buffer.from(message)
+		);
+		console.log('Message has been sent ' + message);
 	}
 	catch (error) {
-		console.log(`error, ${error.message}`);
+		console.log(`publish message error, ${error.message}`);
 	}
 };
 
-module.exports.subscribeMessage = async (channel, controller, binding_key, queueName) => {
+module.exports.subscribeMessageWithRoute = async (channel, BINDING_KEY, routeFile) => {
+
 	try {
-		const appQueue = await channel.assertQueue(queueName);
-					
-		channel.bindQueue(appQueue.queue, EXCHANGE_NAME, binding_key);
-		channel.consume(appQueue.queue, data => {
-			console.log(`${binding_key} recieved data`, data.content.toString());
-			controller.SubscribeEvents(channel, data.content.toString());
-			channel.ack(data);
-		});
+		channel.assertQueue(BINDING_KEY).then(function (ok) {
+			channel.bindQueue(ok.queue, AUTH_EXCHANGE_NAME, BINDING_KEY);
+
+			consola.info(`{listening} [utils.js] -> [subscribeMessageWithRoute] ${BINDING_KEY}`);
+
+			return channel.consume(
+				BINDING_KEY,
+				function (msg) {
+					console.log(
+						`[ ${ getHourAndMinuteLocal() } ] [${BINDING_KEY}] Message received: ${JSON.stringify(
+							JSON.parse(msg.content.toString('utf8')),
+						)}`,
+					);
+					routeFile.default.subscribeEvents( channel, msg );
+				});
+
+		}).catch(e => console.error(e.message));
 	}
 	catch (error) {
 		throw error;
 	}
 };
 
-module.exports.subsMessage = async (controller, QUEUE_NAME) => {
+module.exports.createClientWithExchange = async (exchangeName) => {
 
-	const open = amqlib.connect(MESSAGE_BROKER_URL);
-	
-	open
-		.then(function (conn) {
-			console.log(`[ ${new Date()} ] Server started`);
-			return conn.createChannel();
-		})
-		.then(async function (ch) {
-			return ch.assertQueue(QUEUE_NAME).then(function (ok) {
-				return ch.consume(QUEUE_NAME, function (msg) {
-					console.log(
-						`[ ${new Date()} ] Message received: ${JSON.stringify(
-							JSON.parse(msg.content.toString('utf8')),
-						)}`,
-					);
+	try {
+		const con = await amqlib.connect(MESSAGE_BROKER_URL);
+		const channel = await con.createChannel();
+		await channel.assertExchange(exchangeName, 'direct', false);
+		
+		channel.responseEmitter = new EventEmitter();
+		channel.responseEmitter.setMaxListeners(0);
+		channel.consume(
+			'amq.rabbitmq.reply-to',
+			msg => {
+				channel.responseEmitter.emit(
+					msg.properties.correlationId,
+					msg.content.toString('utf8'),
+				);
+			},
+			{ noAck: true },
+		);
 
-					// eslint-disable-next-line new-cap
-					controller.SubscribeEvents(ch, msg);
-				});
-			});
-		})
-		.catch(e => console.error(e.message));
-
+		consola.info(`{declared} [utils.js] -> [createClientWithExchange] ${exchangeName}`);
+			
+		return channel;
+	}
+	catch (_) {
+		consola.error('[utils.js] -> [createClientWithExchange.error] ->', _.message);
+		throw _;
+	}
 };

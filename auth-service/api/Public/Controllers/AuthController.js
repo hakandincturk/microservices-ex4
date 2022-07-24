@@ -20,7 +20,7 @@ import consola from 'consola';
 
 import { AUTH_BINDING_REPLY_KEY, MESSAGE_BROKER_URL } from '../../src/config/envKeys';
 
-import { publishMessage, getHourAndMinutes } from '../../src/utils/index';
+import { getHourAndMinutes } from '../../src/utils/index';
 
 class AuthController{
 
@@ -112,6 +112,7 @@ class AuthController{
 			returnedData = {type: false, message: error.message};
 			
 		}
+
 		ch.sendToQueue(
 			msg.properties.replyTo,
 			Buffer.from(JSON.stringify(returnedData)),
@@ -131,6 +132,45 @@ class AuthController{
 			);
 	}
 
+	static async checkRole(ch, msg, data){
+		let returnedData, isError = false;
+
+		try {
+			const result = await AuthService.checkRole(data);
+
+			if (result.type) {
+				returnedData = {type: true, message: result.message};
+			}
+			else {
+				returnedData = {type: false, message: result.message};
+			} 
+		}
+		catch (error) {
+			isError = true;
+			consola.error({message: 'error', badge: true});
+			returnedData = {type: false, message: error.message};
+			
+		}
+		ch.sendToQueue(
+			msg.properties.replyTo,
+			Buffer.from(JSON.stringify(returnedData)),
+			{
+				correlationId: msg.properties.correlationId
+			},
+		);
+		ch.ack(msg);
+
+		if (isError)
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent with error: ${JSON.stringify(returnedData)}`,
+			);
+		else
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent: ${returnedData}`, 
+			);
+	
+	}
+
 	static async health( req, res ){
 		res.json({type: true, message: 'AuthRoute working successfuly'});
 	}
@@ -146,6 +186,10 @@ class AuthController{
 			
 		case 'REGISTER': 
 			this.register(ch, msg, data);
+			break;
+			
+		case 'CHECK_ROLE': 
+			this.checkRole(ch, msg, data);
 			break;
 
 		default:

@@ -1,14 +1,16 @@
 import express from 'express';
 
-import InitController from '../Controllers/InitController';
+import SsController from '../Controllers/SsController';
 import CheckRole from '../Middlewares/checkRole';
 
 const app = express();
 
-app.use(CheckRole.checkRole(2, 'ss'));
+// app.use(CheckRole.checkRole(2, 'ss'));
 
-app.get('/ss', InitController.health);
+app.use('/', SsController.redirect);
 
-app.get('/health', InitController.health);
+app.get('/ss', SsController.health);
+
+app.get('/health', SsController.health);
 
 module.exports = app;

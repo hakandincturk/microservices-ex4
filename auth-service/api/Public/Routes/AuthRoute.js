@@ -1,12 +1,49 @@
-import express from 'express';
-
 import AuthController from '../Controllers/AuthController';
 
-const app = express();
+import consola from 'consola';
 
-app.post('/', AuthController.register);
-app.post('/login', AuthController.login);
+class AuthRoute{
 
-app.get('/health', AuthController.health);
+	static async subscribeEvents( ch, msg){
+		try {
+			const { data } = JSON.parse(msg.content.toString());
+			const reqMethod = data.reqMethod;
+			const reqUrl = data.url.split('/');
+			let url = '';
 
-module.exports = app;
+			// * url '/auth/login' şeklinde geliyor başında ki 'init' kısmını kaldırır
+			for (let i = 1;i < reqUrl.length;i++) {
+				url += '/' + reqUrl[i];
+			}
+
+			switch (url) {
+			case '/login':
+				switch (reqMethod){
+				case 'POST':
+					AuthController.login(ch, msg, data.data);
+					break;
+				}
+				break;
+			case '/register':
+				switch (reqMethod){
+				case 'POST':
+					AuthController.login(ch, msg, data.data);
+					break;
+				}
+				break;
+			case '/health':
+				AuthController.health(ch, msg, data.data);
+				break;
+			default:
+				break;
+			}
+		}
+		catch (_) {
+			consola.error('[AUTH] -> [AuthRoute] -> ', _.message);
+		}
+	}
+
+}
+
+export default AuthRoute;
+

@@ -93,6 +93,35 @@ class AuthService{
 		}
 	}
 
+	static async checkRole(data){
+		try {
+
+			const userData = await db.Users.findOne({
+				where: {id: data.user.user_id},
+				attributes: [ 'id' ]
+			});
+
+			const result = await db.Users.findOne({
+				where: {id: userData.id},
+				attributes: [ ],
+				include: {
+					model: db.UTypes,
+					attributes: [ 'id', 'name' ],
+					where: {type: data.uType, name: data.uName},
+					through: { attributes: [] }
+				}
+			});
+			if (!result) return ({type: false, message: 'access denied'});
+			else if (result.UTypes.length === 0) 
+				return ({type: false, message: 'access denied'});
+			else return ({type: true, message: 'go on'});
+		}
+		catch (error) {
+			console.log(error);
+			throw error;
+		}
+	}
+
 }
 
 export default AuthService;
