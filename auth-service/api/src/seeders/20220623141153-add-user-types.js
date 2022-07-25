@@ -31,7 +31,7 @@ module.exports = {
 				updatedAt: new Date()
 			},
 			{
-				name: 'fs',
+				name: 'frs',
 				type: 4,
 				createdAt: new Date(),
 				updatedAt: new Date()

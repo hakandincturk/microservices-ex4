@@ -25,7 +25,8 @@ class InitRoute{
 			case '/add':
 				switch (reqMethod){
 				case 'POST':
-					const result = await CheckPermission.checkPermission(token, 'permission-one');
+					const result = await CheckPermission.checkPermission(token, 'fs-permission-one');
+
 					if (!result.type){
 						ch.sendToQueue(
 							msg.properties.replyTo,
@@ -44,14 +45,62 @@ class InitRoute{
 					}
 					break;
 				case 'GET':
-					const checkPerm = await CheckPermission.checkPermission(token, 'permission-two');
+					const permissionControl = await CheckPermission.checkPermission(token, 'fs-permission-one');
 
-					if (!checkPerm.type){
+					console.log(`[InitRoute] -> ${url} -> checkPerm`, permissionControl);
+
+					if (!permissionControl.type){
 						ch.sendToQueue(
 							msg.properties.replyTo,
 							Buffer.from(JSON.stringify({
 								status: StatusCodes.UNAUTHORIZED,
-								result: checkPerm
+								result: permissionControl
+							})),
+							{
+								correlationId: msg.properties.correlationId
+							}
+						);
+						ch.ack(msg);
+					}
+					else {
+						InitContoller.getInitMethod(ch, msg);				
+					}
+					break;
+				}
+				break;
+			case '/show':
+				switch (reqMethod){
+				case 'POST':
+					const result = await CheckPermission.checkPermission(token, 'fs-permission-three');
+
+					if (!result.type){
+						ch.sendToQueue(
+							msg.properties.replyTo,
+							Buffer.from(JSON.stringify({
+								status: StatusCodes.UNAUTHORIZED,
+								result: 'access denied'
+							})),
+							{
+								correlationId: msg.properties.correlationId
+							}
+						);
+						ch.ack(msg);
+					}
+					else {
+						InitContoller.createInitMethod(ch, msg, data.data);
+					}
+					break;
+				case 'GET':
+					const permissionControl = await CheckPermission.checkPermission(token, 'fs-permission-three');
+
+					console.log(`[InitRoute] -> ${url} -> checkPerm`, permissionControl);
+
+					if (!permissionControl.type){
+						ch.sendToQueue(
+							msg.properties.replyTo,
+							Buffer.from(JSON.stringify({
+								status: StatusCodes.UNAUTHORIZED,
+								result: permissionControl
 							})),
 							{
 								correlationId: msg.properties.correlationId

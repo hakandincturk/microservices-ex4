@@ -7,6 +7,7 @@ class AuthRoute{
 	static async subscribeEvents( ch, msg){
 		try {
 			const { data } = JSON.parse(msg.content.toString());
+
 			const reqMethod = data.reqMethod;
 			const reqUrl = data.url.split('/');
 			let url = '';
@@ -28,6 +29,13 @@ class AuthRoute{
 				switch (reqMethod){
 				case 'POST':
 					AuthController.login(ch, msg, data.data);
+					break;
+				}
+				break;
+			case '/check-role':
+				switch (reqMethod){
+				case 'POST':
+					AuthController.checkRole(ch, msg, data.data);
 					break;
 				}
 				break;

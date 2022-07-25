@@ -14,7 +14,7 @@ module.exports = {
 		 * }], {});
 		 */
 
-		await queryInterface.bulkInsert('Users', [ {
+		 await queryInterface.bulkInsert('Users', [ {
 			username: 'usr-fs',
 			name: 'userName1',
 			surname: 'userSurname',
