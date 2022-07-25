@@ -34,9 +34,37 @@ class InitController{
 		}
 	}
 
-	static async getInitMethod(ch, msg, params){
+	static async getInitMethod(ch, msg){
 		try {
-			const result = await InitService.getInitMethod(params);
+			const result = await InitService.getInitMethod();
+
+			ch.sendToQueue(
+				msg.properties.replyTo,
+				Buffer.from(JSON.stringify({
+					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+					result
+				})),
+				{
+					correlationId: msg.properties.correlationId
+				}
+			);
+			ch.ack(msg);
+
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent: ${{
+					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+					result
+				}}`, 
+			);
+		}
+		catch (_) {
+			consola.error({message: `InitController.js -> ${_.message}`, badge: true});
+		}
+	}
+
+	static async getInitMethodParams(ch, msg, params){
+		try {
+			const result = await InitService.getInitMethodParams(params);
 
 			ch.sendToQueue(
 				msg.properties.replyTo,

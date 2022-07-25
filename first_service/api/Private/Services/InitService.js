@@ -26,7 +26,23 @@ class InitService{
 		}
 	}
 
-	static async getInitMethod(params){
+	static async getInitMethod(){
+		try {
+			const result = await db.Inits.findAll();
+
+			if (!result)
+				return {type: false, message: 'record not created'};
+			else 
+				return {type: true, message: 'succesfull', data: result};
+
+		}
+		catch (_) {
+			consola.error({message: `InitServıce.js -> getInitMethod -> ${_.message}`, badge: true});
+			// return {type: false, message: _.message};
+		}
+	}
+
+	static async getInitMethodParams(params){
 		try {
 			const result = await db.Inits.findAll({where: {
 				id: params.id

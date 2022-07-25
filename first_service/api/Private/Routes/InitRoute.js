@@ -28,13 +28,16 @@ class InitRoute{
 				switch (reqMethod){
 				case 'POST':
 					const result = await CheckPermission.checkPermission(token, 'fs-permission-one');
-
+	
 					if (!result.type){
 						ch.sendToQueue(
 							msg.properties.replyTo,
 							Buffer.from(JSON.stringify({
 								status: StatusCodes.UNAUTHORIZED,
-								result: 'access denied'
+								result: {
+									type: false,
+									message: 'access denied'
+								}
 							})),
 							{
 								correlationId: msg.properties.correlationId
@@ -46,77 +49,28 @@ class InitRoute{
 						InitContoller.createInitMethod(ch, msg, data.data);
 					}
 					break;
-				case 'GET':
-					const permissionControl = await CheckPermission.checkPermission(token, 'fs-permission-one');
 
-					console.log(`[InitRoute] -> ${url} -> checkPerm`, permissionControl);
-
-					if (!permissionControl.type){
-						ch.sendToQueue(
-							msg.properties.replyTo,
-							Buffer.from(JSON.stringify({
-								status: StatusCodes.UNAUTHORIZED,
-								result: permissionControl
-							})),
-							{
-								correlationId: msg.properties.correlationId
+				default:
+					ch.sendToQueue(
+						msg.properties.replyTo,
+						Buffer.from(JSON.stringify({
+							status: StatusCodes.UNAUTHORIZED,
+							result: {
+								type: false,
+								message: `cannot use ${reqMethod} method in this route`
 							}
-						);
-						ch.ack(msg);
-					}
-					else {
-						InitContoller.getInitMethod(ch, msg);				
-					}
+						})),
+						{
+							correlationId: msg.properties.correlationId
+						}
+					);
+					ch.ack(msg);
 					break;
 				}
 				break;
 			case routeWithoutParams(url, '/show'):
-				switch (reqMethod){
-				case 'POST':
-					const result = await CheckPermission.checkPermission(token, 'fs-permission-three');
-
-					if (!result.type){
-						ch.sendToQueue(
-							msg.properties.replyTo,
-							Buffer.from(JSON.stringify({
-								status: StatusCodes.UNAUTHORIZED,
-								result: 'access denied'
-							})),
-							{
-								correlationId: msg.properties.correlationId
-							}
-						);
-						ch.ack(msg);
-					}
-					else {
-						InitContoller.createInitMethod(ch, msg, data.data);
-					}
-					break;
-				case 'GET':
-					const permissionControl = await CheckPermission.checkPermission(token, 'fs-permission-three');
-
-					console.log(`[InitRoute] -> ${url} -> checkPerm`, permissionControl);
-
-					if (!permissionControl.type){
-						ch.sendToQueue(
-							msg.properties.replyTo,
-							Buffer.from(JSON.stringify({
-								status: StatusCodes.UNAUTHORIZED,
-								result: permissionControl
-							})),
-							{
-								correlationId: msg.properties.correlationId
-							}
-						);
-						ch.ack(msg);
-					}
-					else {
-						InitContoller.getInitMethod(ch, msg);				
-					}
-					break;
-				}
-				break;
 			case routeWithParams(url, '/take'):
+				console.log('routeWithParams /take');
 
 				const params = separateParams(url, [ 'id' ]);
 
@@ -136,34 +90,8 @@ class InitRoute{
 					);
 					ch.ack(msg);
 				}
-
 				else {
-					console.log('params -> ', params.params);
-			
 					switch (reqMethod){
-					case 'POST':
-						const result = await CheckPermission.checkPermission(token, 'fs-permission-three');
-
-						if (!result.type){
-							ch.sendToQueue(
-								msg.properties.replyTo,
-								Buffer.from(JSON.stringify({
-									status: StatusCodes.UNAUTHORIZED,
-									result: {
-										type: false,
-										message: 'access denied'
-									}
-								})),
-								{
-									correlationId: msg.properties.correlationId
-								}
-							);
-							ch.ack(msg);
-						}
-						else {
-							InitContoller.createInitMethod(ch, msg, data.data);
-						}
-						break;
 					case 'GET':
 						const permissionControl = await CheckPermission.checkPermission(token, 'fs-permission-three');
 
@@ -183,21 +111,65 @@ class InitRoute{
 							ch.ack(msg);
 						}
 						else {
-							InitContoller.getInitMethod(ch, msg, params.params);				
+							InitContoller.getInitMethodParams(ch, msg, params.params);				
 						}
 						break;
 					}
 				}
 				
 				break;
+			case routeWithoutParams(url, '/take'):
+
+				console.log('routeWithoutParams /take');
+	
+				switch (reqMethod){
+				case 'GET':
+					const permissionControl = await CheckPermission.checkPermission(token, 'fs-permission-one');
+	
+					console.log(`[InitRoute] -> ${url} -> checkPerm`, permissionControl);
+	
+					if (!permissionControl.type){
+						ch.sendToQueue(
+							msg.properties.replyTo,
+							Buffer.from(JSON.stringify({
+								status: StatusCodes.UNAUTHORIZED,
+								result: permissionControl
+							})),
+							{
+								correlationId: msg.properties.correlationId
+							}
+						);
+						ch.ack(msg);
+					}
+					else {
+						InitContoller.getInitMethod(ch, msg);				
+					}
+					break;
+				}
+				break;
 			default:
 				console.log('DEFAULT');
+				ch.sendToQueue(
+					msg.properties.replyTo,
+					Buffer.from(JSON.stringify({
+						status: StatusCodes.BAD_REQUEST,
+						result: {
+							type: false,
+							message: 'error'
+						}
+					})),
+					{
+						correlationId: msg.properties.correlationId
+					}
+				);
+				ch.ack(msg);
 				break;
 			}
 	
 		}
 		catch (_) {
 			consola.error('[FS] -> [InitRoute] -> ', _.message);
+			ch.ack(msg);
 		}
 	}
 
