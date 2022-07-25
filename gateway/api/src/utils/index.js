@@ -3,19 +3,8 @@ import EventEmitter from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import consola from 'consola';
 
+import Helper from './helper'; 
 import { MESSAGE_BROKER_URL, EXCHANGE_NAME } from '../config/envKeys';
-
-module.exports.getHourAndMinutes = () => {
-	let today = new Date();
-	let time = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds();
-	return time;
-};
-
-const getHourAndMinuteLocal = () => {
-	let today = new Date();
-	let time = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds();
-	return time;
-};
 
 //publish message
 module.exports.publishMessage = async (exchangeName, channel, BINDING_KEY, message) => {
@@ -61,7 +50,7 @@ module.exports.subscribeReplyMessage = async (channel, binding_key, queueName, u
 		channel.bindQueue(appQueue.queue, EXCHANGE_NAME, binding_key);
 		channel.consume(appQueue.queue, async (data) => {
 			i++;
-			console.log(i, `${binding_key} recieved data`);
+			Helper.consolaInfo(`${i} ${binding_key} recieved data`);
 			// console.log(data.content.toString());
 			if (!isMatch) {				
 				const parsedData = JSON.parse(data.content.toString());
@@ -102,12 +91,13 @@ module.exports.createClientWithExchange = async (exchangeName) => {
 			{ noAck: true },
 		);
 
-		consola.info(`{declared} [utils.js] -> [createClientWithExchange] ${exchangeName}`);
+		Helper.consolaInfo(`{declared} [utils.js] -> [createClientWithExchange] ${exchangeName}`);
 			
 		return channel;
 	}
 	catch (_) {
-		consola.error('[utils.js] -> [createClientWithExchange.error] ->', _.message);
+		Helper.consolaError(`[utils.js] -> [createClientWithExchange.error] -> ${_.message}`);
+
 		throw _;
 	}
 };
@@ -117,6 +107,9 @@ const sendRPCMessage = async (channel, message, BINDING_KEY) => {
 	// eslint-disable-next-line no-undef
 	const returnedMessage = await new Promise((resolve) => {
 		const correlationId = uuidv4();
+
+		Helper.consolaInfo(`MESSAGE SENT for ${BINDING_KEY} with ${correlationId.split('-')[4]}`);
+
 		channel.responseEmitter.once(correlationId, resolve);
 		channel.sendToQueue(
 			BINDING_KEY,
@@ -125,29 +118,19 @@ const sendRPCMessage = async (channel, message, BINDING_KEY) => {
 				correlationId,
 				replyTo: 'amq.rabbitmq.reply-to'
 			});
+			
+		Helper.consolaInfo(`returned message received with ${correlationId.split('-')[4]}`);
+		
 	});
 	return returnedMessage;
 };
 
 module.exports.sendMessageToQueue = async (channel, message, BINDING_KEY) => {
-	// const channel = await createClient(MESSAGE_BROKER_URL);
-	// const channel = global.rabbitMqConn;
-	consola.info({
-		message: `[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${BINDING_KEY}`,
-		badge: true
-	});
-
 	const returnedData = await sendRPCMessage(
 		channel,
 		JSON.stringify({ data: message }),
 		BINDING_KEY
 	);
-
-	consola.info({
-		message: `[ ${ getHourAndMinuteLocal() } ] returned message received `,
-		badge: true
-	});
-
 	return returnedData;
 };
 

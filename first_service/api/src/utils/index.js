@@ -93,6 +93,13 @@ const sendRPCMessage = async (channel, message, BINDING_KEY) => {
 	// eslint-disable-next-line no-undef
 	const returnedMessage = await new Promise((resolve) => {
 		const correlationId = uuidv4();
+		
+		consola.info({
+			message: 
+				`[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${BINDING_KEY} with ${correlationId.split('-')[4]}`,
+			badge: true
+		});
+
 		channel.responseEmitter.once(correlationId, resolve);
 		channel.sendToQueue(
 			BINDING_KEY,
@@ -101,28 +108,25 @@ const sendRPCMessage = async (channel, message, BINDING_KEY) => {
 				correlationId,
 				replyTo: 'amq.rabbitmq.reply-to'
 			});
+
+		consola.info({
+			message: `[ ${ getHourAndMinuteLocal() } ] returned message received with ${correlationId.split('-')[4]} `,
+			badge: true
+		});
 	});
+
 	return returnedMessage;
 };
 
 module.exports.sendMessageToQueue = async (channel, message, BINDING_KEY) => {
 	// const channel = await createClient(MESSAGE_BROKER_URL);
 	// const channel = global.rabbitMqConn;
-	consola.info({
-		message: `[ ${ getHourAndMinuteLocal() } ] MESSAGE SENT for ${BINDING_KEY}`,
-		badge: true
-	});
 
 	const returnedData = await sendRPCMessage(
 		channel,
 		JSON.stringify({ data: message }),
 		BINDING_KEY
 	);
-
-	consola.info({
-		message: `[ ${ getHourAndMinuteLocal() } ] returned message received `,
-		badge: true
-	});
-
+	
 	return returnedData;
 };

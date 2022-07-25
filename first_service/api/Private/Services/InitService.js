@@ -26,9 +26,11 @@ class InitService{
 		}
 	}
 
-	static async getInitMethod(){
+	static async getInitMethod(params){
 		try {
-			const result = await db.Inits.findAll();
+			const result = await db.Inits.findAll({where: {
+				id: params.id
+			}});
 
 			if (!result)
 				return {type: false, message: 'record not created'};

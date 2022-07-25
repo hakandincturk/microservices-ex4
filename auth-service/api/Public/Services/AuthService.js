@@ -98,13 +98,8 @@ class AuthService{
 	static async checkRole(data){
 		try {
 
-			const userData = await db.Users.findOne({
-				where: {id: data.user_id},
-				attributes: [ 'id' ]
-			});
-
 			const result = await db.Users.findOne({
-				where: {id: userData.id},
+				where: {id: data.user_id},
 				attributes: [ ],
 				include: {
 					model: db.Roles,

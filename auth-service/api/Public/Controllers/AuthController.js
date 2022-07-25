@@ -110,7 +110,6 @@ class AuthController{
 			isError = true;
 			consola.error({message: 'error', badge: true});
 			returnedData = {type: false, message: error.message};
-			
 		}
 
 		ch.sendToQueue(
