@@ -4,29 +4,32 @@ import consola from 'consola';
 
 import { JWT_SECRET } from '../../src/config/envKeys';
 
+import { sendMessageToQueue } from '../../src/utils/index';
+
 class CheckPermission{
 
 	static async checkPermission (token, permName){
 		try {
 			const pureToken = token.split(' ')[1];
 			const tokenData = await jwt.verify(pureToken, JWT_SECRET);
-	
-			const result = await db.Users.findOne({
-				where: {id: tokenData.user_id},
-				attributes: [ 'username' ],
-				include: {
-					model: db.Roles,
-					attributes: [ 'id', 'name' ],
-					through: { attributes: [] },
-					include: {
-						model: db.Permissions,
-						where: { name: permName },
-						through: { attributes: [] }
-					}
-				} 
-			});
+			tokenData.uType = 1;
+			tokenData.permName = permName;
 
-			if (result.Roles.length === 0) return {type: false, message: 'access denied'};
+			const resData = await sendMessageToQueue(
+				global.authChannel,
+				{
+					url: '/check-role',
+					reqMethod: 'POST',
+					data: tokenData
+				},
+				'AUTH_SERVICE.AUTH'
+			);
+
+			console.log('[first-service] -> [checkPermission] -> resData', resData);
+
+			const parsedResData = JSON.parse(resData);
+
+			if (!parsedResData.type) return {type: false, message: 'access denied'};
 			else return {type: true};
 		}
 		catch (error) {

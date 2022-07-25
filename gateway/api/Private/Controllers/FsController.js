@@ -11,6 +11,7 @@ class FsController{
 
 			let newUrl = '/';
 
+			// * url '/fs/init/add' şeklinde geliyor başında ki 'fs' kısmını kaldırır
 			for (let i = 2;i < reqUrl.length;i++) {
 				newUrl += reqUrl[i] + '/';				
 			}

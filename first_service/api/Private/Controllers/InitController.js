@@ -34,9 +34,9 @@ class InitController{
 		}
 	}
 
-	static async getInitMethod(ch, msg){
+	static async getInitMethod(ch, msg, params){
 		try {
-			const result = await InitService.getInitMethod();
+			const result = await InitService.getInitMethod(params);
 
 			ch.sendToQueue(
 				msg.properties.replyTo,

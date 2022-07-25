@@ -110,7 +110,6 @@ class AuthController{
 			isError = true;
 			consola.error({message: 'error', badge: true});
 			returnedData = {type: false, message: error.message};
-			
 		}
 
 		ch.sendToQueue(
@@ -139,7 +138,7 @@ class AuthController{
 			const result = await AuthService.checkRole(data);
 
 			if (result.type) {
-				returnedData = {type: true, message: result.message};
+				returnedData = {type: true, message: result.message, data: result.data};
 			}
 			else {
 				returnedData = {type: false, message: result.message};

@@ -2,6 +2,8 @@ import db from '../../src/models';
 import md5 from 'md5';
 import jwt from 'jsonwebtoken';
 
+import consola from 'consola';
+
 import { JWT_SECRET } from '../../src/config/envKeys';
 
 class AuthService{
@@ -96,28 +98,29 @@ class AuthService{
 	static async checkRole(data){
 		try {
 
-			const userData = await db.Users.findOne({
-				where: {id: data.user.user_id},
-				attributes: [ 'id' ]
-			});
-
 			const result = await db.Users.findOne({
-				where: {id: userData.id},
+				where: {id: data.user_id},
 				attributes: [ ],
 				include: {
-					model: db.UTypes,
+					model: db.Roles,
 					attributes: [ 'id', 'name' ],
-					where: {type: data.uType, name: data.uName},
-					through: { attributes: [] }
+					include: {
+						model: db.Permissions,
+						where: { name: data.permName, utype: data.uType }, //TODO: is utype neccessary? 
+						through: {attributes: []}
+					}
 				}
+			
 			});
+
 			if (!result) return ({type: false, message: 'access denied'});
-			else if (result.UTypes.length === 0) 
+			else if (result.Roles.length === 0) 
 				return ({type: false, message: 'access denied'});
 			else return ({type: true, message: 'go on'});
 		}
 		catch (error) {
-			console.log(error);
+			consola.error('[AuthService] -> [checkRole] -> [error] ', error.message);
+
 			throw error;
 		}
 	}

@@ -12,7 +12,7 @@ import { createClientWithExchange, bindQueueAndExchange } from '../src/utils/ind
 
 const app = express();
 
-// app.use(checkAuth);
+app.use(checkAuth);
 
 const src = async () => {
 	

@@ -108,8 +108,6 @@ class AuthController{
 			newUrl = newUrl.slice(0, newUrl.length-1);
 
 			const bindingAndQueueKey =  `AUTH_SERVICE.${reqUrl[0].toUpperCase()}`;
-
-			console.log('bindingAndQueueKey', bindingAndQueueKey);
 			
 			const resData = await sendMessageToQueue(
 				global.authChannel,
@@ -122,8 +120,6 @@ class AuthController{
 			);
 			
 			const parsedResData = JSON.parse(resData);
-
-			console.log('parsedResData', parsedResData);
 
 			if (!parsedResData.type) return res.status(403).json(parsedResData);
 			else return res.status(200).json(parsedResData);
