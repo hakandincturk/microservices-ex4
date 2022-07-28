@@ -137,11 +137,11 @@ class AuthController{
 			);
 	}
 
-	static async checkRole(ch, msg, data){
+	static async checkPermission(ch, msg, data){
 		let returnedData, isError = false;
 
 		try {
-			const result = await AuthService.checkRole(data);
+			const result = await AuthService.checkPermission(data);
 
 			if (result.type) {
 				returnedData = {type: true, message: result.message, data: result.data};
@@ -156,6 +156,46 @@ class AuthController{
 			returnedData = {type: false, message: error.message};
 			
 		}
+		ch.sendToQueue(
+			msg.properties.replyTo,
+			Buffer.from(JSON.stringify(returnedData)),
+			{
+				correlationId: msg.properties.correlationId
+			},
+		);
+		ch.ack(msg);
+
+		if (isError)
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent with error: ${JSON.stringify(returnedData)}`,
+			);
+		else
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent: ${returnedData}`, 
+			);
+	
+	}
+
+	static async checkRole(ch, msg, data){
+		let returnedData, isError = false;
+
+		try {
+			const result = await AuthService.checkRole(data);
+
+			if (result.type) {
+				returnedData = {type: true};
+			}
+			else {
+				returnedData = {type: false, message: result.message};
+			} 
+		}
+		catch (error) {
+			isError = true;
+			consola.error({message: 'error', badge: true});
+			returnedData = {type: false, message: error.message};
+			
+		}
+
 		ch.sendToQueue(
 			msg.properties.replyTo,
 			Buffer.from(JSON.stringify(returnedData)),

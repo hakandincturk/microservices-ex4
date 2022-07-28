@@ -45,6 +45,13 @@ class AuthRoute{
 					break;
 				}
 				break;
+			case '/check-permission':
+				switch (reqMethod){
+				case 'POST':
+					AuthController.checkPermission(ch, msg, data.data);
+					break;
+				}
+				break;
 			case '/check-role':
 				switch (reqMethod){
 				case 'POST':

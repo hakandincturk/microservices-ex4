@@ -5,7 +5,7 @@ import CheckRole from '../Middlewares/checkRole';
 
 const app = express();
 
-// app.use(CheckRole.checkRole(2, 'ss'));
+app.use(CheckRole.checkRole(2, 'ss'));
 
 app.use('/', SsController.redirect);
 

@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 
 import { JWT_SECRET } from '../../src/config/envKeys';
 
-import { AUTH_QUEUE_NAME } from '../../src/config/envKeys';
 import { sendMessageToQueue } from '../../src/utils/index';
 
 class CheckRole{
@@ -15,20 +14,23 @@ class CheckRole{
 				const tokenData = await jwt.verify(token, JWT_SECRET);
 
 				const result = await sendMessageToQueue(
-					'CHECK_ROLE',
+					global.authChannel,
 					{
-						user: tokenData,
-						uType,
-						uName
+						url: '/check-role',
+						reqMethod: 'POST',
+						data: {
+							user: tokenData,
+							uType,
+							uName
+						}
+						
 					},
-					AUTH_QUEUE_NAME
+					'AUTH_SERVICE.AUTH'
 				);
 
 				console.log('checkRole.js -> ', result);
 
 				if (!result) return res.status(401).json({type: false, message: 'access denied'});
-				else if (result.UTypes.length === 0) 
-					return res.status(401).json({type: false, message: 'access denied'});
 				else next();
 			}
 			catch (error) {

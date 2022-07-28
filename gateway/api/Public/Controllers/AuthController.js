@@ -14,12 +14,7 @@
  * @property {string} password
  */
 
-import {
-	AUTH_EXCHANGE_NAME,
-	FS_CREATE_NEW_USER_BINDING_KEY
-} from '../../src/config/envKeys';
-
-import { sendMessageToQueue, publishMessage } from '../../src/utils/index';
+import { sendMessageToQueue} from '../../src/utils/index';
 
 class AuthController{
 

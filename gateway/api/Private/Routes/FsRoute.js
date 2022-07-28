@@ -7,7 +7,7 @@ import CheckRole from '../Middlewares/checkRole';
 
 const app = express();
 
-// app.use(CheckRole.checkRole(1, 'fs'));
+app.use(CheckRole.checkRole(1, 'fs'));
 
 app.use('/', FsController.redirect);
 

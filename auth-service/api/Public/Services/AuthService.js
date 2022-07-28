@@ -144,7 +144,7 @@ class AuthService{
 		}
 	}
 
-	static async checkRole(data){
+	static async checkPermission(data){
 		try {
 
 			const result = await db.Users.findOne({
@@ -158,6 +158,31 @@ class AuthService{
 						where: { name: data.permName, utype: data.uType }, //TODO: is utype neccessary? 
 						through: {attributes: []}
 					}
+				}
+			
+			});
+
+			if (!result) return ({type: false, message: 'access denied'});
+			else if (result.Roles.length === 0) 
+				return ({type: false, message: 'access denied'});
+			else return ({type: true, message: 'go on'});
+		}
+		catch (error) {
+			consola.error('[AuthService] -> [checkRole] -> [error] ', error.message);
+
+			throw error;
+		}
+	}
+
+	static async checkRole(data){
+		try {
+
+			const result = await db.Users.findOne({
+				where: {id: data.user.user_id},
+				attributes: [ ],
+				include: {
+					model: db.Roles,
+					attributes: [ 'id', 'name' ]
 				}
 			
 			});

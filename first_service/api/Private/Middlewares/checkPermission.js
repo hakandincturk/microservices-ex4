@@ -18,7 +18,7 @@ class CheckPermission{
 			const resData = await sendMessageToQueue(
 				global.authChannel,
 				{
-					url: '/check-role',
+					url: '/check-permission',
 					reqMethod: 'POST',
 					data: tokenData
 				},
