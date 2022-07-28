@@ -31,7 +31,7 @@ const startServer = async () => {
 	app.use('/private', privateRoutes);
 	app.use('/', publicRoutes);
 
-	await srv();
+	// await srv();
 
 	swaggerGenerator(swaggerOptions);
 

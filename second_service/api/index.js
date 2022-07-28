@@ -26,7 +26,7 @@ const startServer = async () => {
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({ extended: true }));
 
-	await conn();
+	// await conn();
 	
 	app.use('/', privateRoutes);
 	

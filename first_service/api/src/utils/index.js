@@ -48,6 +48,8 @@ module.exports.subscribeMessageWithRoute = async (channel, BINDING_KEY, routeFil
 							JSON.parse(msg.content.toString('utf8')),
 						)}`,
 					);
+
+				 console.log(msg.properties);
 					routeFile.default.subscribeEvents( channel, msg );
 				});
 
