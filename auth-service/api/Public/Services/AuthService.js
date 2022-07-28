@@ -35,31 +35,80 @@ class AuthService{
 				name: body.name,
 				surname: body.surname,
 				isDeleted: 0
-			}, {transction: t});
-
-			await t.commit();
+			}, {transaction: t});
 
 			if (!user) {
+				await t.rollback();
 				return {
 					type: false,
-					message: 'user not created'
+					message: 'user not created (1)'
 				};
 			}
 
-			return {
-				type: true,
-				message: 'User created',
-				data: {
-					id: user.id,
-					name: user.name,
-					email: user.email,
-					isDeleted: user.isDeleted
+			const userType = await db.UTypes.findOne({
+				where: {
+					name: body.userType
+				},
+				attributes: [ 'id' ]
+			});
+
+			if (!userType){
+				await t.rollback();
+				return {
+					type: false,
+					message: 'User not created (3)'
+				};
+			}
+			else {
+				const role = await db.Roles.findOne({
+					where: {
+						name: body.userRole,
+						utype: userType.id
+					},
+					attributes: [ 'id' ]
+				});
+	
+				if (!role){
+					await t.rollback();
+					return {
+						type: false,
+						message: 'User not created (2), this type hasnt this role'
+					};
 				}
-			};
+				else {
+					await db.UserTypes.create({
+						user_id: user.id,
+						utype: userType.id
+					}, {transaction: t});
+		
+					await db.UserRoles.create({
+						user_id: user.id,
+						role_id: role.id,
+						utype: userType.id
+					}, {transaction: t});
+
+					await t.commit();
+		
+					return {
+						type: true,
+						message: 'User created',
+						data: {
+							id: user.id,
+							name: user.name,
+							email: user.email,
+							isDeleted: user.isDeleted
+						}
+					};
+				}	
+			}
 		}
-		catch (error) {
+		catch (_) {
 			await t.rollback();
-			throw error;
+			consola.error(`[authService] -> [register] error0 -> ${_}`);
+			return {
+				type: false,
+				message: `${_}`
+			};
 		}
 	}
 

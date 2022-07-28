@@ -21,6 +21,7 @@ import consola from 'consola';
 import { AUTH_BINDING_REPLY_KEY, MESSAGE_BROKER_URL } from '../../src/config/envKeys';
 
 import { getHourAndMinutes } from '../../src/utils/index';
+import { StatusCodes } from 'http-status-codes';
 
 class AuthController{
 
@@ -36,11 +37,13 @@ class AuthController{
 		let returnedData, isError = false;
 
 		try {
+
+			console.log(data);
+			
 			const validation = await AuthValidation.registerValidation(data);
 
 			if (!validation.type){
 				returnedData = {type: false, message: validation.message};
-	
 			}
 			else {
 				const result = await AuthService.register(data);
@@ -49,15 +52,18 @@ class AuthController{
 					returnedData = {type: true, message: result.message, data: result.data};
 				}
 				else {
-					returnedData = {type: false, message: result.message};
+					returnedData = {type: false, status: StatusCodes.FORBIDDEN, message: result.message};
 				} 
 			}			
 		}
 		catch (error) {
 			isError = true;
 			consola.error({message: 'error', badge: true});
-			returnedData = {type: false, message: error.message};
+			returnedData = {type: false, status: StatusCodes.FORBIDDEN, message: error.message};
 		}
+
+		console.log('[AuthController] -> [register] -> returnedData', returnedData);
+		
 		ch.sendToQueue(
 			msg.properties.replyTo,
 			Buffer.from(JSON.stringify(returnedData)),

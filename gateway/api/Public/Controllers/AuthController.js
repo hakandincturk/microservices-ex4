@@ -45,8 +45,8 @@ class AuthController{
 			}
 
 			newUrl = newUrl.slice(0, newUrl.length-1);
-			const bindingAndQueueKey =  `AUTH_SERVICE.${newUrl.split('/')[1].toUpperCase()}`;
-			
+			const bindingAndQueueKey =  `AUTH_SERVICE.${reqUrl[0].toUpperCase()}`;
+
 			const resData = await sendMessageToQueue(
 				global.authChannel,
 				{
@@ -58,29 +58,16 @@ class AuthController{
 			);
 			
 			const parsedResData = JSON.parse(resData);
-			
-			if (!parsedResData.type) return res.status(403).json(parsedResData);
-			else {
-				// TODO: karşılığını yaz 
-				await publishMessage(
-					AUTH_EXCHANGE_NAME,
-					global.authChannel,
-					FS_CREATE_NEW_USER_BINDING_KEY,
-					JSON.stringify({
-						services: [
-							'fs_service:user',
-							'ss_service:admin'
-						],
-						parsedResData
-					})
-				);
-				
-				return res.status(parsedResData.status).json(parsedResData.result);
 
+			console.log('[gateway] -> [AuthController] -> [register] -> parsedData', parsedResData);
+			
+			if (!parsedResData.type) return res.status(parsedResData.status).json(parsedResData);
+			else {
+				return res.status(200).json(parsedResData);
 			}
 		}
 		catch (error) {
-			res.json({type: false, message: error.message});
+			return res.json({type: false, message: error.message});
 		}
 	}
 
@@ -136,4 +123,4 @@ class AuthController{
 
 }
 
-module.exports = AuthController;
+export default AuthController;

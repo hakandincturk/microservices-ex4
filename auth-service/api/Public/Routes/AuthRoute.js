@@ -1,6 +1,8 @@
 import AuthController from '../Controllers/AuthController';
+import { StatusCodes } from 'http-status-codes';
 
 import consola from 'consola';
+import RabbitMq from '../../src/utils/RabbitMq';
 
 class AuthRoute{
 
@@ -25,10 +27,21 @@ class AuthRoute{
 					break;
 				}
 				break;
-			case '/register':
+			case '/':
 				switch (reqMethod){
 				case 'POST':
-					AuthController.login(ch, msg, data.data);
+				
+					AuthController.register(ch, msg, data.data);
+					break;
+				default:
+					RabbitMq.sendMessageReply(ch, msg,
+						{
+							status: StatusCodes.UNAUTHORIZED,
+							result: {
+								type: false,
+								message: `cannot use ${reqMethod} method in this route`
+							}
+						});
 					break;
 				}
 				break;

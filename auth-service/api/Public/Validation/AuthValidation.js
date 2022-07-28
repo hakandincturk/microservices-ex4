@@ -9,7 +9,9 @@ class AuthValidation{
 				email: Joi.string().email().required(),
 				password: Joi.string().min(5).pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')),
 				name: Joi.string().min(3).required(),
-				surname: Joi.string().min(3).required()
+				surname: Joi.string().min(3).required(),
+				userType: Joi.string().required(),
+				userRole: Joi.string().required()
 			});
 
 			await schema.validateAsync(data);
