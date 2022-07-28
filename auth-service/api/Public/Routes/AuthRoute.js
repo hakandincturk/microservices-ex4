@@ -36,10 +36,10 @@ class AuthRoute{
 				default:
 					RabbitMq.sendMessageReply(ch, msg,
 						{
-							status: StatusCodes.UNAUTHORIZED,
+							status: StatusCodes.BAD_REQUEST,
 							result: {
 								type: false,
-								message: `cannot use ${reqMethod} method in this route`
+								message: `cannot use ${reqMethod} method in this route ${url}`
 							}
 						});
 					break;

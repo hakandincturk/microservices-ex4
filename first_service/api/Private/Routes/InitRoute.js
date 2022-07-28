@@ -6,6 +6,7 @@ import consola from 'consola';
 import CheckPermission from '../Middlewares/checkPermission';
 
 import { routeWithParams, routeWithoutParams, separateParams } from '../../src/utils/routeHelper';
+import RabbitMq from '../../src/utils/RabbitMq';
 
 class InitRoute{
 
@@ -24,145 +25,170 @@ class InitRoute{
 			}
 
 			switch (url) {
-			case routeWithoutParams(url, '/add'):
+			case routeWithoutParams(url, '/create'):
 				switch (reqMethod){
 				case 'POST':
 					const result = await CheckPermission.checkPermission(token, 'fs-permission-one');
-	
 					if (!result.type){
-						ch.sendToQueue(
-							msg.properties.replyTo,
-							Buffer.from(JSON.stringify({
+						RabbitMq.sendMessageReply(ch, msg, 
+							{
 								status: StatusCodes.UNAUTHORIZED,
 								result: {
 									type: false,
-									message: 'access denied'
+									message: 'acces denied'
 								}
-							})),
-							{
-								correlationId: msg.properties.correlationId
-							}
-						);
-						ch.ack(msg);
+							});
 					}
 					else {
 						InitContoller.createInitMethod(ch, msg, data.data);
 					}
 					break;
-
 				default:
-					ch.sendToQueue(
-						msg.properties.replyTo,
-						Buffer.from(JSON.stringify({
-							status: StatusCodes.UNAUTHORIZED,
-							result: {
-								type: false,
-								message: `cannot use ${reqMethod} method in this route`
-							}
-						})),
+					RabbitMq.sendMessageReply(ch, msg, 
 						{
-							correlationId: msg.properties.correlationId
-						}
-					);
-					ch.ack(msg);
-					break;
-				}
-				break;
-			case routeWithoutParams(url, '/show'):
-			case routeWithParams(url, '/take'):
-				console.log('routeWithParams /take');
-
-				const params = separateParams(url, [ 'id' ]);
-
-				if (!params.type){
-					ch.sendToQueue(
-						msg.properties.replyTo,
-						Buffer.from(JSON.stringify({
 							status: StatusCodes.BAD_REQUEST,
 							result: {
 								type: false,
-								message: 'params required'
+								message: `cannot use ${reqMethod} method in this route ${url}`
 							}
-						})),
-						{
-							correlationId: msg.properties.correlationId
-						}
-					);
-					ch.ack(msg);
+						});
+					break;
 				}
-				else {
-					switch (reqMethod){
-					case 'GET':
-						const permissionControl = await CheckPermission.checkPermission(token, 'fs-permission-three');
-
-						console.log(`[InitRoute] -> ${url} -> checkPerm`, permissionControl);
-
-						if (!permissionControl.type){
-							ch.sendToQueue(
-								msg.properties.replyTo,
-								Buffer.from(JSON.stringify({
-									status: StatusCodes.UNAUTHORIZED,
-									result: permissionControl
-								})),
-								{
-									correlationId: msg.properties.correlationId
-								}
-							);
-							ch.ack(msg);
-						}
-						else {
-							InitContoller.getInitMethodParams(ch, msg, params.params);				
-						}
-						break;
-					}
-				}
-				
 				break;
-			case routeWithoutParams(url, '/take'):
-
-				console.log('routeWithoutParams /take');
-	
-				switch (reqMethod){
+			case routeWithoutParams(url, '/get'):
+				switch (reqMethod) {
 				case 'GET':
-					const permissionControl = await CheckPermission.checkPermission(token, 'fs-permission-one');
-	
-					console.log(`[InitRoute] -> ${url} -> checkPerm`, permissionControl);
-	
-					if (!permissionControl.type){
-						ch.sendToQueue(
-							msg.properties.replyTo,
-							Buffer.from(JSON.stringify({
-								status: StatusCodes.UNAUTHORIZED,
-								result: permissionControl
-							})),
+					const result = await CheckPermission.checkPermission(token, 'fs-permission-one');
+					if (!result.type){
+						RabbitMq.sendMessageReply(ch, msg, 
 							{
-								correlationId: msg.properties.correlationId
-							}
-						);
-						ch.ack(msg);
+								status: StatusCodes.UNAUTHORIZED,
+								result: {
+									type: false,
+									message: 'acces denied'
+								}
+							});
 					}
 					else {
-						InitContoller.getInitMethod(ch, msg);				
+						InitContoller.getInitMethod(ch, msg);
 					}
+					break;
+				
+				default:
+					RabbitMq.sendMessageReply(ch, msg, 
+						{
+							status: StatusCodes.BAD_REQUEST,
+							result: {
+								type: false,
+								message: `cannot use ${reqMethod} method in this route ${url}`
+							}
+						});
+					break;
+				}
+				break;
+			case routeWithParams(url, '/get'):
+				switch (reqMethod) {
+				case 'GET':
+					const result = await CheckPermission.checkPermission(token, 'fs-permission-one');
+					if (!result.type){
+						RabbitMq.sendMessageReply(ch, msg, 
+							{
+								status: StatusCodes.UNAUTHORIZED,
+								result: {
+									type: false,
+									message: 'acces denied'
+								}
+							});
+					}
+					else {
+						const params = separateParams(url, [ 'id' ]);
+
+						if (!params.type){
+							RabbitMq.sendMessageReply(ch, msg, 
+								{
+									status: StatusCodes.BAD_REQUEST,
+									result: {
+										type: false,
+										message: 'invalid params, waited {id}'
+									}
+								});
+						}
+						else {
+							InitContoller.getInitMethodParams(ch, msg, params.params);
+
+						}
+
+					}
+
+					break;
+				
+				default:
+					RabbitMq.sendMessageReply(ch, msg, 
+						{
+							status: StatusCodes.BAD_REQUEST,
+							result: {
+								type: false,
+								message: `cannot use ${reqMethod} method in this route ${url}`
+							}
+						});
+					break;
+				}
+				break;
+			case routeWithParams(url, '/delete'):
+
+				switch (reqMethod) {
+				case 'DELETE':
+					const result = await CheckPermission.checkPermission(token, 'fs-permission-one');
+					if (!result.type){
+						RabbitMq.sendMessageReply(ch, msg, 
+							{
+								status: StatusCodes.UNAUTHORIZED,
+								result: {
+									type: false,
+									message: 'acces denied'
+								}
+							});
+					}
+					else {
+						const params = separateParams(url, [ 'id' ]);
+						if (!params.type){
+							RabbitMq.sendMessageReply(ch, msg, 
+								{
+									status: StatusCodes.BAD_REQUEST,
+									result: {
+										type: false,
+										message: 'invalid params, waited {id}'
+									}
+								});
+						}
+						console.log('[first_service] -> [InitRoute] -> [switch] params', params);
+
+						InitContoller.deleteInitMethod(ch, msg, params.params);
+					}
+					break;
+				
+				default:
+					RabbitMq.sendMessageReply(ch, msg, 
+						{
+							status: StatusCodes.BAD_REQUEST,
+							result: {
+								type: false,
+								message: `cannot use ${reqMethod} method in this route ${url}`
+							}
+						});
 					break;
 				}
 				break;
 			default:
 				console.log('DEFAULT');
-				ch.sendToQueue(
-					msg.properties.replyTo,
-					Buffer.from(JSON.stringify({
+				RabbitMq.sendMessageReply(ch, msg, 
+					{
 						status: StatusCodes.BAD_REQUEST,
 						result: {
 							type: false,
-							message: 'error'
+							message: `cannot use ${reqMethod} method in this route ${url}`
 						}
-					})),
-					{
-						correlationId: msg.properties.correlationId
-					}
-				);
-				ch.ack(msg);
+					});
 				break;
 			}
 	

@@ -49,7 +49,7 @@ module.exports.subscribeMessageWithRoute = async (channel, BINDING_KEY, routeFil
 						)}`,
 					);
 
-				 console.log(msg.properties);
+					//  console.log(msg.properties);
 					routeFile.default.subscribeEvents( channel, msg );
 				});
 

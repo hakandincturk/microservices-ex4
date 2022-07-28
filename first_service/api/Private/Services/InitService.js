@@ -44,6 +44,7 @@ class InitService{
 
 	static async getInitMethodParams(params){
 		try {
+
 			const result = await db.Inits.findAll({where: {
 				id: params.id
 			}});
@@ -60,46 +61,19 @@ class InitService{
 		}
 	}
 
-	static async createNewUser(data, role){
+	static async deleteRecord(params){
 
-		// TODO kullanıcıyı fs_service'in kendi veritabanına bağla ve yetkileri buradan getir.
-		console.log(data);
+		const result = await db.Inits.destroy({where: {
+			id: params.id
+		}});
 
-		// 	const t = await db.sequelize.transaction();
+		console.log('deleteRecord -> ', result);
 
-		// 	try {
+		if (result > 0)
+			return {type: false, message: 'record not deleted'};
+		else 
+			return {type: true, message: 'succesfull'};
 
-		/*
-		 * 		const user = await db.Users.create({
-		 * 			username: data.username,
-		 * 			email: data.email,
-		 * 			isDeleted: 0
-		 * 		}, {transction: t});
-		 */
-
-		// 		await t.commit();
-
-		/*
-		 * 		if (!user) {
-		 * 			return {
-		 * 				type: false,
-		 * 				message: 'user not created'
-		 * 			};
-		 * 		}
-		 */
-
-	/*
-	 * 		return {
-	 * 			type: true,
-	 * 			message: 'User created'
-	 * 		};
-	 * 	}
-	 * 	catch (error) {
-	 * 		await t.rollback();
-	 * 		throw error;
-	 * 	}
-	 * }
-	 */
 	}
 
 	static async first(){

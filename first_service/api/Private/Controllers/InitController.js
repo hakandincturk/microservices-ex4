@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import consola from 'consola';
 
 import { getHourAndMinutes } from '../../src/utils/index';
+import RabbitMq from '../../src/utils/RabbitMq';
 
 class InitController{
 
@@ -10,17 +11,10 @@ class InitController{
 		try {
 			const result = await InitService.createInitMethod(data);
 
-			ch.sendToQueue(
-				msg.properties.replyTo,
-				Buffer.from(JSON.stringify({
-					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
-					result
-				})),
-				{
-					correlationId: msg.properties.correlationId
-				}
-			);
-			ch.ack(msg);
+			RabbitMq.sendMessageReply(ch, msg, {
+				status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+				result
+			});
 
 			console.log(
 				`[ ${ getHourAndMinutes() } ] Message sent: ${{
@@ -38,17 +32,10 @@ class InitController{
 		try {
 			const result = await InitService.getInitMethod();
 
-			ch.sendToQueue(
-				msg.properties.replyTo,
-				Buffer.from(JSON.stringify({
-					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
-					result
-				})),
-				{
-					correlationId: msg.properties.correlationId
-				}
-			);
-			ch.ack(msg);
+			RabbitMq.sendMessageReply(ch, msg, {
+				status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+				result
+			});
 
 			console.log(
 				`[ ${ getHourAndMinutes() } ] Message sent: ${{
@@ -66,17 +53,10 @@ class InitController{
 		try {
 			const result = await InitService.getInitMethodParams(params);
 
-			ch.sendToQueue(
-				msg.properties.replyTo,
-				Buffer.from(JSON.stringify({
-					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
-					result
-				})),
-				{
-					correlationId: msg.properties.correlationId
-				}
-			);
-			ch.ack(msg);
+			RabbitMq.sendMessageReply(ch, msg, {
+				status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+				result
+			});
 
 			console.log(
 				`[ ${ getHourAndMinutes() } ] Message sent: ${{
@@ -90,19 +70,32 @@ class InitController{
 		}
 	}
 
-	static async createNewUser(data, role){
+	static async deleteInitMethod(ch, msg, params){
+		try {
+			const result = InitService.deleteRecord(params);
 
-		const result = InitService.createNewUser(data, role); 
+			RabbitMq.sendMessageReply(ch, msg, {
+				status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+				result
+			});
 
-	}
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent: ${{
+					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+					result
+				}}`, 
+			);
+		}
+		catch (_) {
+			consola.error(`[first_service] -> [InitController] error (1) -> ${_.message}`);
 
-	static async first(req, res){
-		const result = InitService.first();
-		
-		if (result.type)
-			return res.status(StatusCodes.OK).json({type: true, message: result.message});
-		else
-			return res.status(StatusCodes.BAD_REQUEST).json({type: false, message: result.message});
+			RabbitMq.sendMessageReply(ch, msg, {
+				status: StatusCodes.BAD_REQUEST,
+				result: {
+					message: 'error (1)'
+				}
+			});
+		}
 	}
 
 	static async health(req, res){
