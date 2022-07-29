@@ -72,8 +72,36 @@ class InitController{
 
 	static async deleteInitMethod(ch, msg, params){
 		try {
-			const result = InitService.deleteRecord(params);
+			const result = await InitService.deleteRecord(params);
 
+			RabbitMq.sendMessageReply(ch, msg, {
+				status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+				result
+			});
+
+			console.log(
+				`[ ${ getHourAndMinutes() } ] Message sent: ${{
+					status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
+					result
+				}}`, 
+			);
+		}
+		catch (_) {
+			consola.error(`[first_service] -> [InitController] error (1) -> ${_.message}`);
+
+			RabbitMq.sendMessageReply(ch, msg, {
+				status: StatusCodes.BAD_REQUEST,
+				result: {
+					message: 'error (1)'
+				}
+			});
+		}
+	}
+
+	static async updateInitMethod(ch, msg, data, params){
+		try {
+			const result = await InitService.updateRecord(data, params);
+			
 			RabbitMq.sendMessageReply(ch, msg, {
 				status: result.type ? StatusCodes.OK : StatusCodes.BAD_REQUEST,
 				result

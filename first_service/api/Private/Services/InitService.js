@@ -31,7 +31,7 @@ class InitService{
 			const result = await db.Inits.findAll();
 
 			if (!result)
-				return {type: false, message: 'record not created'};
+				return {type: false, message: 'records not found'};
 			else 
 				return {type: true, message: 'succesfull', data: result};
 
@@ -45,12 +45,12 @@ class InitService{
 	static async getInitMethodParams(params){
 		try {
 
-			const result = await db.Inits.findAll({where: {
+			const result = await db.Inits.findOne({where: {
 				id: params.id
 			}});
 
 			if (!result)
-				return {type: false, message: 'record not created'};
+				return {type: false, message: 'record not found'};
 			else 
 				return {type: true, message: 'succesfull', data: result};
 
@@ -67,13 +67,32 @@ class InitService{
 			id: params.id
 		}});
 
-		console.log('deleteRecord -> ', result);
+		if (result > 0){
+			return {type: false, message: 'record not deleted'}; 
+		}
+		else {
+			return {type: true, message: 'succesfull'};			
+		} 
 
-		if (result > 0)
-			return {type: false, message: 'record not deleted'};
-		else 
-			return {type: true, message: 'succesfull'};
+	}
 
+	static async updateRecord(data, params){
+		const result = await db.Inits.update({
+			name: data.name,
+			email: data.email,
+			content: data.content
+		}, {
+			where: {
+				id: params.id
+			}
+		});
+
+		if (!result){
+			return {type: false, message: 'record not updated'}; 
+		}
+		else {
+			return {type: true, message: 'succesfull'};			
+		} 
 	}
 
 	static async first(){

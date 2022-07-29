@@ -161,13 +161,54 @@ class InitRoute{
 									}
 								});
 						}
-						console.log('[first_service] -> [InitRoute] -> [switch] params', params);
 
 						InitContoller.deleteInitMethod(ch, msg, params.params);
 					}
 					break;
 				
 				default:
+					RabbitMq.sendMessageReply(ch, msg, 
+						{
+							status: StatusCodes.BAD_REQUEST,
+							result: {
+								type: false,
+								message: `cannot use ${reqMethod} method in this route ${url}`
+							}
+						});
+					break;
+				}
+				break;
+			case routeWithParams(url, '/update'):
+				switch (reqMethod) {
+				case 'PUT':
+					const result = await CheckPermission.checkPermission(token, 'fs-permission-one');
+					if (!result.type){
+						RabbitMq.sendMessageReply(ch, msg, 
+							{
+								status: StatusCodes.UNAUTHORIZED,
+								result: {
+									type: false,
+									message: 'acces denied'
+								}
+							});
+					}
+					else {
+						const params = separateParams(url, [ 'id' ]);
+						if (!params.type){
+							RabbitMq.sendMessageReply(ch, msg, 
+								{
+									status: StatusCodes.BAD_REQUEST,
+									result: {
+										type: false,
+										message: 'invalid params, waited {id}'
+									}
+								});
+						}
+						InitContoller.updateInitMethod(ch, msg, data.data, params.params);
+					}
+					break;
+				default:
+					console.log('DEFAULT');
 					RabbitMq.sendMessageReply(ch, msg, 
 						{
 							status: StatusCodes.BAD_REQUEST,
@@ -195,6 +236,14 @@ class InitRoute{
 		}
 		catch (_) {
 			consola.error('[FS] -> [InitRoute] -> ', _.message);
+			RabbitMq.sendMessageReply(ch, msg, 
+				{
+					status: StatusCodes.BAD_REQUEST,
+					result: {
+						type: false,
+						message: 'something happened and error occured'
+					}
+				});
 			ch.ack(msg);
 		}
 	}
