@@ -3,15 +3,15 @@ import consola from 'consola';
 
 class AService{
 
-	static async createInitMethod(data){
+	static async createAMethod(data){
 		try {
 
 			console.log(data);
 
-			const result = await db.Inits.create({
-				name: data.name,
-				email: data.email,
-				content: data.content
+			const result = await db.ATables.create({
+				phone: data.phone,
+				city: data.city,
+				age: data.age
 			});
 
 			if (!result)
@@ -21,71 +21,82 @@ class AService{
 
 		}
 		catch (_) {
-			consola.error({message: `InitServıce.js -> createInitMethod -> ${_.message}`, badge: true});
+			consola.error({message: `AServıce.js -> createAMethod -> ${_.message}`, badge: true});
 			// return {type: false, message: _.message};
 		}
 	}
 
-	static async getInitMethod(){
+	static async getAMethod(){
 		try {
-			const result = await db.Inits.findAll();
+			const result = await db.ATables.findAll();
 
 			if (!result)
-				return {type: false, message: 'record not created'};
+				return {type: false, message: 'records not found'};
 			else 
 				return {type: true, message: 'succesfull', data: result};
 
 		}
 		catch (_) {
-			consola.error({message: `InitServıce.js -> getInitMethod -> ${_.message}`, badge: true});
+			consola.error({message: `AServıce.js -> getAMethod -> ${_.message}`, badge: true});
 			// return {type: false, message: _.message};
 		}
 	}
 
-	static async createNewUser(data, role){
+	static async getAMethodParams(params){
+		try {
 
-		// TODO kullanıcıyı fs_service'in kendi veritabanına bağla ve yetkileri buradan getir.
-		console.log(data);
+			const result = await db.ATables.findOne({where: {
+				id: params.id
+			}});
 
-		// 	const t = await db.sequelize.transaction();
+			if (!result)
+				return {type: false, message: 'record not found'};
+			else 
+				return {type: true, message: 'succesfull', data: result};
 
-		// 	try {
+		}
+		catch (_) {
+			consola.error({message: `AServıce.js -> getAMethod -> ${_.message}`, badge: true});
+			// return {type: false, message: _.message};
+		}
+	}
 
-		/*
-		 * 		const user = await db.Users.create({
-		 * 			username: data.username,
-		 * 			email: data.email,
-		 * 			isDeleted: 0
-		 * 		}, {transction: t});
-		 */
+	static async deleteRecord(params){
 
-		// 		await t.commit();
+		const result = await db.ATables.destroy({where: {
+			id: params.id
+		}});
 
-		/*
-		 * 		if (!user) {
-		 * 			return {
-		 * 				type: false,
-		 * 				message: 'user not created'
-		 * 			};
-		 * 		}
-		 */
+		if (result > 0){
+			return {type: true, message: 'succesfull'};			
+		}
+		else {
+			return {type: false, message: 'record not deleted'}; 
+		} 
 
-	/*
-	 * 		return {
-	 * 			type: true,
-	 * 			message: 'User created'
-	 * 		};
-	 * 	}
-	 * 	catch (error) {
-	 * 		await t.rollback();
-	 * 		throw error;
-	 * 	}
-	 * }
-	 */
+	}
+
+	static async updateRecord(data, params){
+		const result = await db.ATables.update({
+			phone: data.phone,
+			city: data.city,
+			age: data.age
+		}, {
+			where: {
+				id: params.id
+			}
+		});
+
+		if (!result){
+			return {type: false, message: 'record not updated'}; 
+		}
+		else {
+			return {type: true, message: 'succesfull'};			
+		} 
 	}
 
 	static async first(){
-		return ({type: true, message: 'init service working successfuly'});		
+		return ({type: true, message: 'A service working successfuly'});		
 	}
 
 }

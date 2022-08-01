@@ -1,4 +1,3 @@
-import db from '../../src/models';
 import jwt from 'jsonwebtoken';
 import consola from 'consola';
 
@@ -12,20 +11,18 @@ class CheckPermission{
 		try {
 			const pureToken = token.split(' ')[1];
 			const tokenData = await jwt.verify(pureToken, JWT_SECRET);
-			tokenData.uType = 1;
+			tokenData.uType = 2;
 			tokenData.permName = permName;
 
 			const resData = await sendMessageToQueue(
 				global.authChannel,
 				{
-					url: '/check-role',
+					url: '/check-permission',
 					reqMethod: 'POST',
 					data: tokenData
 				},
 				'AUTH_SERVICE.AUTH'
 			);
-
-			console.log('[first-service] -> [checkPermission] -> resData', resData);
 
 			const parsedResData = JSON.parse(resData);
 

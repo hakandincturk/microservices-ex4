@@ -1,4 +1,3 @@
-import db from '../../src/models';
 import jwt from 'jsonwebtoken';
 import consola from 'consola';
 
@@ -24,8 +23,6 @@ class CheckPermission{
 				},
 				'AUTH_SERVICE.AUTH'
 			);
-
-			console.log('[first-service] -> [checkPermission] -> resData', resData);
 
 			const parsedResData = JSON.parse(resData);
 

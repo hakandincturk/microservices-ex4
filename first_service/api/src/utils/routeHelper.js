@@ -2,10 +2,6 @@ module.exports.routeWithoutParams = (url, route) => {
 
 	const urlRegex = new RegExp(`^${route}$`); 
 
-	console.log(
-		`[FS_SERVICE] -> [routeHelper.js] -> routeWithoutParams ${urlRegex.test(url)} url -> ${url} route -> ${route}`
-	);
-
 	if (urlRegex.test(url))
 		return route;
 	else return;
@@ -13,9 +9,7 @@ module.exports.routeWithoutParams = (url, route) => {
 
 module.exports.routeWithParams = (url, route) => {
 	const urlRegex = new RegExp(`^${route}/.*$`); 
-	console.log(
-		`[FS_SERVICE] -> [routeHelper.js] -> routeWithParams ${urlRegex.test(url)} url -> ${url} route -> ${route}`
-	);
+	
 	if (urlRegex.test(url))
 		return url;
 	else return;
